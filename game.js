@@ -96,6 +96,7 @@
     crashes: 0,
     unclear: 0,
     commandCount: 0,
+    controlVersion: 0,
     finished: false,
     failed: false,
     muted: false,
@@ -129,8 +130,7 @@
   };
 
   let speechRecognition = null;
-  let finalTranscript = "";
-  let recognitionHadResult = false;
+  const voice = { enabled: false, pending: false, session: 0, restartTimer: null, rapidEnds: 0, lastFingerprint: "" };
   let availableVoices = [];
 
   function toRad(degrees) {
@@ -191,7 +191,9 @@
   }
 
   function resetGame({ keepModal = false, silent = false } = {}) {
+    stopLiveVoice();
     game.roundId += 1;
+    game.controlVersion += 1;
     game.started = false;
     game.startTime = 0;
     game.elapsed = 0;
@@ -295,7 +297,7 @@
   }
 
   function speak(text) {
-    if (game.muted || !("speechSynthesis" in window)) return;
+    if (game.muted || voice.enabled || !("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "zh-CN";
@@ -381,11 +383,12 @@
 
     if (!text) return result;
 
-    const stopMatch = /(停下|停车|刹车|别动|不要动|停住|踩刹车|立刻停|马上停|停)/.test(text);
+    const stopText = text.replace(/不要(?:停车|停|刹车)|不用(?:停车|停|刹车)|别(?:停车|停|踩刹车|刹车)|不踩刹车|不停|停车场/g, " ");
+    const stopMatch = /(停下|停车|刹车|别动|不要动|停住|踩刹车|立刻停|马上停|停)/.test(stopText);
     const parkMatch = /(挂p挡|挂p档|p挡|p档|驻车)/.test(text);
     const reverseMatch = /(挂倒挡|挂倒档|倒挡|倒档|倒车|往后倒|向后倒|后退|往后退|退一点|退后)/.test(text);
     const driveMatch = /(挂d挡|挂d档|d挡|d档|前进|往前开|向前开|往前走|往前一点|开过去|向前一点)/.test(text);
-    const continueMatch = /(继续|接着|别停|保持|就这样|再来一点|再倒一点|再走一点)/.test(text);
+    const continueMatch = /(继续|接着|别停|不要停|不停|保持|就这样|再来一点|再倒一点|再走一点)/.test(text);
 
     if (stopMatch) {
       result.stop = true;
@@ -629,8 +632,12 @@
     dom.commandInput.value = "";
 
     const commandRound = game.roundId;
+    const commandVersion = ++game.controlVersion;
+    const local = options.parsed || parseLocalCommand(text);
     let parsed;
-    if (dom.enhancedToggle.checked && !options.forceLocal) {
+    if (local.stop) {
+      parsed = local;
+    } else if (dom.enhancedToggle.checked && !options.forceLocal) {
       try {
         parsed = await parseEnhancedCommand(text);
       } catch (error) {
@@ -642,14 +649,14 @@
         }
       }
     } else {
-      parsed = parseLocalCommand(text);
+      parsed = local;
     }
 
-    if (commandRound !== game.roundId || game.finished) return;
-    parsed = applyMishearing(parsed, text, { ignoreMishear: Boolean(options.ignoreMishear) });
+    if (commandRound !== game.roundId || commandVersion !== game.controlVersion || game.finished) return;
+    parsed = applyMishearing(parsed, text, { ignoreMishear: Boolean(options.ignoreMishear || local.stop) });
 
     const reply = parsed.reply || instructionReply(parsed);
-    const delay = options.immediate ? 40 : parsed.stop ? 100 : 330 + Math.random() * 370;
+    const delay = options.immediate || parsed.stop ? 0 : 330 + Math.random() * 370;
 
     if (!parsed.understood) {
       game.unclear += 1;
@@ -663,11 +670,13 @@
     setSisterSpeech(reply, game.crashes >= 2 ? "panicked" : "neutral");
     addLog("system", "指令解释", parsed.summary.join(" · ") || "执行上下文动作", instructionMeta(parsed));
 
-    window.setTimeout(() => {
-      if (commandRound !== game.roundId || game.finished) return;
+    const execute = () => {
+      if (commandRound !== game.roundId || commandVersion !== game.controlVersion || game.finished) return;
       applyInstruction(parsed);
-      setBadge(game.listening ? "正在听" : "已执行", game.listening ? "listening" : "");
-    }, delay);
+      setBadge(voice.enabled ? "实时听你指挥" : "已执行", voice.enabled ? "listening" : "");
+    };
+    if (delay === 0) execute();
+    else window.setTimeout(execute, delay);
   }
 
   function applyInstruction(parsed) {
@@ -712,101 +721,189 @@
     }
   }
 
+  let RecognitionClass = null;
+
   function initSpeechRecognition() {
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Recognition) {
-      dom.micHint.textContent = "当前浏览器不支持，仍可打字玩";
-      return;
-    }
-
-    speechRecognition = new Recognition();
-    speechRecognition.lang = "zh-CN";
-    speechRecognition.interimResults = true;
-    speechRecognition.continuous = false;
-    speechRecognition.maxAlternatives = 1;
-
-    speechRecognition.onstart = () => {
-      voicePending = false;
-      game.listening = true;
-      if (!voiceHeld) { speechRecognition.stop(); return; }
-      finalTranscript = "";
-      recognitionHadResult = false;
-      dom.micButton.classList.add("listening");
-      dom.micButton.querySelector("strong").textContent = "正在听，松开发送";
-      setBadge("正在听", "listening");
-      dom.speechBubble.textContent = "我听着呢，别一紧张只会喊“啊啊啊”。";
-    };
-
-    speechRecognition.onresult = (event) => {
-      let interim = "";
-      for (let i = event.resultIndex; i < event.results.length; i += 1) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) finalTranscript += transcript;
-        else interim += transcript;
-      }
-      recognitionHadResult = Boolean(finalTranscript || interim);
-      dom.commandInput.value = finalTranscript || interim;
-      if (interim) dom.speechBubble.textContent = `你是不是在说：“${interim}”`;
-    };
-
-    speechRecognition.onerror = (event) => {
-      const friendly = {
-        "not-allowed": "麦克风权限被拒绝，请允许访问或改用文字输入。",
-        "no-speech": "没听到声音，再按一次麦克风试试。",
-        network: "语音识别网络连接失败，可以先用文字指令。",
-        aborted: "语音输入已取消。",
-      }[event.error] || `语音识别出错：${event.error}`;
-      showToast(friendly, event.error === "not-allowed" ? "danger" : "", 3000);
-    };
-
-    speechRecognition.onend = () => {
-      voicePending = false;
-      game.listening = false;
-      dom.micButton.classList.remove("listening");
-      dom.micButton.querySelector("strong").textContent = "按住说话，松开发送";
-      setBadge("等你发话");
-      const text = voiceCancelled ? "" : (finalTranscript || dom.commandInput.value).trim();
-      finalTranscript = "";
-      if (text) submitCommand(text);
-      else if (!voiceCancelled && document.body.dataset.screen === "practice" && !recognitionHadResult) dom.speechBubble.textContent = "你刚才是不是只吸了一口气？";
-    };
+    RecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!RecognitionClass) dom.micHint.textContent = "当前浏览器不支持，仍可打字玩";
   }
 
-  let voiceHeld = false;
-  let voicePending = false;
-  let voiceCancelled = false;
+  function updateVoiceButton(label) {
+    dom.micButton.setAttribute("aria-pressed", String(voice.enabled));
+    dom.difficultySelect.disabled = voice.enabled;
+    dom.micButton.classList[voice.enabled ? "add" : "remove"]("listening");
+    dom.micButton.querySelector("strong").textContent = label || (voice.enabled ? "实时监听中 · 点一下关闭" : "点一下开启实时语音");
+  }
 
-  function beginVoiceHold(event) {
+  function brakeForVoiceDisconnect() {
+    game.controlVersion += 1;
+    car.speed = 0;
+    car.targetSpeed = 0;
+  }
+
+  function stopLiveVoice({ brake = true } = {}) {
+    const wasActive = voice.enabled || voice.pending || game.listening;
+    voice.enabled = false;
+    voice.pending = false;
+    voice.session += 1;
+    window.clearTimeout(voice.restartTimer);
+    voice.restartTimer = null;
+    const recognition = speechRecognition;
+    speechRecognition = null;
+    game.listening = false;
+    if (wasActive && brake) brakeForVoiceDisconnect();
+    try { recognition?.abort(); } catch { /* A completed recognition session may already be closed. */ }
+    updateVoiceButton();
+    if (wasActive) setBadge("语音已关闭");
+  }
+
+  function toggleLiveVoice() {
+    if (voice.enabled) {
+      stopLiveVoice();
+      document.getElementById("voiceTranscript").textContent = "语音已关闭，车辆已刹停。";
+      return;
+    }
     if (document.body.dataset.screen !== "practice" || game.finished) return;
-    if (!speechRecognition) {
+    if (!RecognitionClass) {
       showToast("麦克风不可用：请使用文字或快捷指令", "", 3000);
       dom.commandInput.focus();
       return;
     }
-    if (voicePending || game.listening) return;
-    voiceHeld = true;
-    voiceCancelled = false;
-    voicePending = true;
-    recognitionHadResult = false;
-    dom.commandInput.value = "";
-    finalTranscript = "";
-    event?.preventDefault();
-    if (event?.pointerId !== undefined) dom.micButton.setPointerCapture(event.pointerId);
+    voice.enabled = true;
+    voice.rapidEnds = 0;
+    voice.lastFingerprint = "";
     window.speechSynthesis?.cancel();
-    try { speechRecognition.start(); }
-    catch { voicePending = false; voiceHeld = false; showToast("麦克风正在启动，请稍后再试"); }
+    document.getElementById("voiceTranscript").textContent = "正在连接语音，可以直接说：倒车、左转、回正、停车。";
+    startLiveRecognition();
   }
 
-  function endVoiceHold() {
-    voiceHeld = false;
-    if (game.listening) speechRecognition.stop();
+  function startLiveRecognition() {
+    if (!voice.enabled || document.hidden || game.finished || document.body.dataset.screen !== "practice") return;
+    const recognition = new RecognitionClass();
+    speechRecognition = recognition;
+    const session = ++voice.session;
+    const startedAt = performance.now();
+    const processed = new Map();
+    let heardSpeech = false;
+    const current = () => voice.enabled && session === voice.session && speechRecognition === recognition && !game.finished && document.body.dataset.screen === "practice";
+    recognition.lang = "zh-CN";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+    voice.pending = true;
+    updateVoiceButton("正在连接实时语音…");
+    recognition.onstart = () => {
+      if (!current()) { try { recognition.abort(); } catch {} return; }
+      voice.pending = false;
+      game.listening = true;
+      updateVoiceButton();
+      setBadge("实时听你指挥", "listening");
+    };
+    recognition.onresult = event => {
+      if (!current()) return;
+      heardSpeech = true;
+      voice.rapidEnds = 0;
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        const result = event.results[index];
+        const text = result[0].transcript.trim();
+        document.getElementById("voiceTranscript").textContent = `听到：${text}`;
+        const actions = extractLiveActions(text);
+        const seen = processed.get(index) || new Set();
+        const fresh = actions.filter((action, order) => !seen.has(`${order}:${action.type}:${action.value}`));
+        // Semantic order survives punctuation/filler edits; compare only the preceding revision.
+        processed.set(index, new Set(actions.map((action, order) => `${order}:${action.type}:${action.value}`)));
+        if (!fresh.length) {
+          if (result.isFinal && !actions.length) document.getElementById("voiceTranscript").textContent = `听到：${text}。可直接说“倒车、左转、回正、停车”。`;
+          continue;
+        }
+        // A new stop wins the current recognition update; old stop spans never block later speech.
+        const stop = fresh.slice().reverse().find(action => action.type === "stop");
+        const selected = stop ? [stop] : [...new Map(fresh.map(action => [action.type, action])).values()];
+        const instruction = selected.map(action => action.text).join("，");
+        const parsed = parseLocalCommand(instruction);
+        if (!parsed.understood) continue;
+        const fingerprint = JSON.stringify([parsed.stop, parsed.gear, parsed.steering, parsed.speed, parsed.move]);
+        if (fingerprint === voice.lastFingerprint && liveActionStillApplied(parsed)) continue;
+        voice.lastFingerprint = fingerprint;
+        void submitCommand(instruction, { immediate: true, forceLocal: true, ignoreMishear: true, parsed });
+      }
+    };
+    recognition.onerror = event => {
+      if (!current()) return;
+      if (event.error === "no-speech") return;
+      const message = {
+        "not-allowed": "麦克风权限被拒绝，已刹停。可使用文字或快捷指令。",
+        "service-not-allowed": "此浏览器无法启动语音服务，已刹停。可使用文字指令。",
+        "audio-capture": "未找到可用麦克风，已刹停。可使用文字指令。",
+        network: "语音识别网络连接失败，已刹停。可使用文字或快捷指令。",
+        aborted: "语音输入已中断，车辆已刹停。",
+      }[event.error] || "语音识别已中断，已刹停。可使用文字指令。";
+      stopLiveVoice();
+      document.getElementById("voiceTranscript").textContent = message;
+      showToast(message, "danger", 3000);
+    };
+    recognition.onend = () => {
+      if (!current()) return;
+      game.listening = false;
+      voice.pending = false;
+      speechRecognition = null;
+      brakeForVoiceDisconnect();
+      if (!heardSpeech && performance.now() - startedAt < 1000) voice.rapidEnds += 1;
+      else voice.rapidEnds = 0;
+      if (voice.rapidEnds >= 3) {
+        stopLiveVoice();
+        document.getElementById("voiceTranscript").textContent = "语音暂时无法持续连接，已刹停。请使用文字指令，或点麦克风重试。";
+        return;
+      }
+      updateVoiceButton("语音重连中 · 已刹停");
+      document.getElementById("voiceTranscript").textContent = "语音重连中，车辆已刹停。连接后请继续说指令。";
+      voice.restartTimer = window.setTimeout(() => {
+        voice.restartTimer = null;
+        if (voice.enabled && session === voice.session) startLiveRecognition();
+      }, 180);
+    };
+    try { recognition.start(); }
+    catch {
+      stopLiveVoice();
+      document.getElementById("voiceTranscript").textContent = "语音启动失败，已刹停。请点麦克风重试或使用文字指令。";
+    }
   }
 
-  function cancelVoiceHold() {
-    voiceCancelled = true;
-    voiceHeld = false;
-    finalTranscript = "";
-    speechRecognition?.abort();
+  function liveActionStillApplied(parsed) {
+    if (parsed.stop) return car.targetSpeed === 0;
+    if (parsed.gear && car.gear !== (parsed.gear === "R" ? -1 : parsed.gear === "D" ? 1 : 0)) return false;
+    if ((parsed.move || parsed.gear || parsed.speed) && car.targetSpeed === 0) return false;
+    const steering = { left_full: -CAR_SPEC.maxSteer, left_slight: -toRad(14), center: 0, right_slight: toRad(14), right_full: CAR_SPEC.maxSteer };
+    if (parsed.steering && Math.abs(car.targetSteer - steering[parsed.steering]) > .0001) return false;
+    if (parsed.speed && Math.abs(car.targetSpeed) !== ({ slow: 42, normal: 58, fast: 86 })[parsed.speed]) return false;
+    return true;
+  }
+
+  function extractLiveActions(rawText) {
+    // Preserve offsets while excluding negated stops and non-command mentions.
+    const text = rawText.replace(/不要(?:停车|停|刹车)|不用(?:停车|停|刹车)|别(?:停车|停|踩刹车|刹车)|不踩刹车|不停|停车场/g, match => " ".repeat(match.length));
+    const rules = [
+      ["stop", "stop", /(停下|停车|刹车|别动|不要动|停住|立刻停|马上停|停)/g],
+      ["gear", "P", /(挂[Pp]挡|挂[Pp]档|[Pp]挡|[Pp]档|驻车)/g],
+      ["gear", "R", /(挂倒挡|挂倒档|倒挡|倒档|倒车|往后倒|向后倒|后退|往后退|退一点|退后)/g],
+      ["gear", "D", /(挂[Dd]挡|挂[Dd]档|[Dd]挡|[Dd]档|前进|往前开|向前开|往前走|往前一点|开过去|向前一点)/g],
+      ["steering", "center", /(回正|打正|摆正|方向盘正|轮子回正|正回来|回一点)/g],
+      ["steering", "left_full", /(左(?:边)?(?:打|转|拐)?死|向左打死|往左打死|方向盘.{0,5}左.{0,3}死|左满舵|左边到底)/g],
+      ["steering", "right_full", /(右(?:边)?(?:打|转|拐)?死|向右打死|往右打死|方向盘.{0,5}右.{0,3}死|右满舵|右边到底)/g],
+      ["steering", "left_slight", /(向左一点|往左一点|左打一(?:点|小圈|半圈)|左边一点|微微左|稍微左|左转一点|左一点|向左|往左|左转|打左)/g],
+      ["steering", "right_slight", /(向右一点|往右一点|右打一(?:点|小圈|半圈)|右边一点|微微右|稍微右|右转一点|右一点|向右|往右|右转|打右)/g],
+      ["speed", "slow", /(慢慢|慢一点|慢点|缓缓|轻一点|别太快|龟速|稳一点|悠着点)/g],
+      ["speed", "fast", /(快一点|快点|加速|踩油门|油门|冲|速度快)/g],
+      ["speed", "normal", /(正常速度|匀速|保持速度)/g],
+      ["move", "continue", /(继续|接着|保持|就这样|再来一点|再倒一点|再走一点)/g],
+    ];
+    const actions = [];
+    for (const [type, value, regex] of rules) {
+      for (const match of text.matchAll(regex)) actions.push({ type, value, start: match.index, end: match.index + match[0].length, text: match[0] });
+    }
+    const filtered = actions.filter(action => !actions.some(other => other !== action && other.type === action.type && other.start <= action.start && other.end >= action.end && other.end - other.start > action.end - action.start));
+    filtered.sort((a, b) => a.start - b.start || a.end - b.end);
+    return filtered;
   }
 
   function carCorners(atCar = car) {
@@ -1005,6 +1102,7 @@
 
   function finishGame(success) {
     if (game.finished) return;
+    stopLiveVoice();
     game.finished = true;
     game.failed = !success;
     car.targetSpeed = 0;
@@ -1334,8 +1432,7 @@
   }
 
   function navigate(screen) {
-    cancelVoiceHold();
-    finalTranscript = "";
+    stopLiveVoice();
     stopDemo();
     window.speechSynthesis?.cancel();
     closeModal(dom.helpModal);
@@ -1873,19 +1970,12 @@
     window.addEventListener("resize", setupCanvas);
     document.addEventListener("visibilitychange", () => {
       if (document.hidden && game.demo) setDemoPaused(true);
+      if (document.hidden) stopLiveVoice();
     });
-    dom.micButton.addEventListener("pointerdown", beginVoiceHold);
-    dom.micButton.addEventListener("pointerup", endVoiceHold);
-    dom.micButton.addEventListener("pointercancel", cancelVoiceHold);
-    dom.micButton.addEventListener("keydown", (event) => {
-      if ((event.key === " " || event.key === "Enter") && !event.repeat) { event.preventDefault(); beginVoiceHold(); }
-    });
-    dom.micButton.addEventListener("keyup", (event) => {
-      if (event.key === " " || event.key === "Enter") { event.preventDefault(); endVoiceHold(); }
-    });
+    dom.micButton.addEventListener("click", toggleLiveVoice);
     dom.clearLogButton.addEventListener("click", clearLog);
     dom.resetButton.addEventListener("click", () => {
-      if (game.listening && speechRecognition) speechRecognition.stop();
+      stopLiveVoice();
       stopDemo();
       if (document.body.dataset.screen === "demo") startDemo();
       else resetGame();
@@ -1969,6 +2059,7 @@
         speed: Number(car.speed.toFixed(2)),
         targetSpeed: Number(car.targetSpeed.toFixed(2)),
         steeringDegrees: Number(toDeg(car.steer).toFixed(2)),
+        targetSteeringDegrees: Number(toDeg(car.targetSteer).toFixed(2)),
       },
       game: {
         started: game.started,
@@ -1978,8 +2069,11 @@
         crashes: game.crashes,
         unclear: game.unclear,
         score: currentScore(),
+        commandCount: game.commandCount,
+        listening: game.listening,
       },
       screen: document.body.dataset.screen,
+      voice: { enabled: voice.enabled, pending: voice.pending, session: voice.session },
       demo: { active: game.demo, phase: game.demoPhase, paused: demoPaused, sceneElapsed: demoSceneElapsed },
       impact: { x: visual.impactX, y: visual.impactY, remaining: visual.impact },
       parking: {

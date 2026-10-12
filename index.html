@@ -140,14 +140,16 @@
         </div>
 
         <div class="input-panel">
-          <button id="micButton" class="mic-button" type="button">
+          <button id="micButton" class="mic-button" type="button" aria-pressed="false">
             <span class="mic-icon">●</span>
             <span class="mic-copy">
-              <strong>按住说话，松开发送</strong>
-              <small id="micHint">也可输入文字，或点快捷指令</small>
+              <strong>点一下开启实时语音</strong>
+              <small id="micHint">直接说指令 · 再点关闭并刹停</small>
             </span>
             <span class="voice-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
           </button>
+
+          <div id="voiceTranscript" class="voice-transcript" role="status" aria-live="polite">开启后，识别到指令就执行；“停车”优先。监听时 AI 用字幕回应。</div>
 
           <div class="text-command-row">
             <input id="commandInput" type="text" autocomplete="off" maxlength="100" placeholder="也可以打字：挂倒挡，左打死，慢慢倒" aria-label="输入驾驶指令" />

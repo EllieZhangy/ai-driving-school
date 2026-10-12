@@ -30,7 +30,10 @@ GitHub's repository file viewer does not run the game. Use the deployed website 
 - Playback speed controls animation timing only. Chinese narration stays at a natural rate and each punchline finishes before the next chapter.
 - Pause/resume and progress indicators. Leaving the tab pauses the demo.
 - Practice retains steering physics, braking, collision penalties, scores, subtitles, and character reactions.
-- Hold the microphone button and release to send; text and command chips remain available when recognition cannot run.
+- Tap the microphone once to enable continuous live listening, and tap again to turn it off and brake. Recognized interim commands execute immediately through local parsing; repeated or finalized transcripts do not replay actions.
+- Live voice commands bypass intentional mishearing and model round trips. Stop/brake commands take priority and invalidate older pending actions. Character responses remain subtitled during listening to prevent speech feedback.
+- If recognition ends naturally, the car brakes while the microphone reconnects and waits for a fresh command. Errors, leaving practice, switching away from the page, or finishing a round end live listening and stop movement.
+- Text input and command chips remain available when speech recognition cannot run.
 
 Demo movement is scripted cinematic choreography. Practice uses the vehicle simulation. Demo crashes do not carry into practice.
 

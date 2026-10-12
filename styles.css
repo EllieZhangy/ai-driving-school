@@ -762,3 +762,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
 .avatar .mouth { top:39px; left:26px; width:13px; border-color:#4e8276; }
 .avatar.panicked .mouth { top:36px; left:26px; border-color:#4e8276; height:12px; }
 .avatar.annoyed .mouth { top:43px; border-color:#4e8276; }
+
+/* Continuous voice status stays separate from editable text commands. */
+.voice-transcript { margin-top:12px; padding:9px 11px; color:#6a785c; background:#f4f7eb; border-radius:10px; font-size:12px; line-height:1.6; overflow-wrap:anywhere; }
+.mic-button { touch-action:manipulation; }
