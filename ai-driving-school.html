@@ -6,7 +6,8 @@
   <meta name="theme-color" content="#fff6e7" />
   <meta name="description" content="AI驾校：只能用语音或文字指挥AI学员完成倒车入库。" />
   <title>AI驾校｜指令停车挑战</title>
-  <style>/* System fonts keep the mobile build independent of external asset hosts. */
+  <style>
+/* System fonts keep the mobile build independent of external asset hosts. */
 
 :root {
   --bg: #101117;
@@ -774,6 +775,101 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
 /* Continuous voice status stays separate from editable text commands. */
 .voice-transcript { margin-top:12px; padding:9px 11px; color:#6a785c; background:#f4f7eb; border-radius:10px; font-size:12px; line-height:1.6; overflow-wrap:anywhere; }
 .mic-button { touch-action:manipulation; }
+
+/* In-scene dialogue distinguishes the coach from the student without voiceover. */
+.stage-dialogue {
+  position:absolute;
+  z-index:3;
+  width:min(310px,38%);
+  padding:11px 14px 13px;
+  border:1px solid #c5dac0;
+  border-radius:16px;
+  background:#fffef5f2;
+  color:#4c6250;
+  box-shadow:0 4px 0 #aec6a045,0 8px 22px #5f795b12;
+  pointer-events:none;
+  overflow-wrap:anywhere;
+}
+.stage-dialogue::after {
+  content:"";
+  position:absolute;
+  bottom:-8px;
+  left:28px;
+  width:14px;
+  height:14px;
+  background:#fffef5;
+  border-right:1px solid #c5dac0;
+  border-bottom:1px solid #c5dac0;
+  transform:rotate(45deg);
+}
+.stage-dialogue-ai { left:16px; top:58px; }
+.stage-dialogue-coach { left:16px; bottom:30px; background:#fff4e7f5; border-color:#e5c99f; color:#785d35; box-shadow:0 4px 0 #e5c99f45,0 8px 22px #94754912; }
+.stage-dialogue-coach::after { background:#fff4e7; border-color:#e5c99f; }
+.dialogue-speaker { display:flex; align-items:center; gap:6px; font-size:10px; line-height:1.5; letter-spacing:.02em; }
+.dialogue-speaker span { display:grid; place-items:center; min-width:22px; height:18px; padding:0 3px; border-radius:6px; background:#e6efda; color:#658055; font-size:9px; }
+.stage-dialogue-coach .dialogue-speaker span { background:#ffe4bb; color:#95703c; font-size:14px; }
+.stage-dialogue .speech-bubble,.stage-dialogue p {
+  min-height:0;
+  margin:6px 0 0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:none;
+  box-shadow:none;
+  color:inherit;
+  font-size:14px;
+  font-weight:600;
+  line-height:1.55;
+}
+.stage-dialogue.speaking { animation:dialogueAppear .22s ease-out; }
+@keyframes dialogueAppear { from { opacity:.35; transform:translateY(5px) scale(.98); } to { opacity:1; transform:translateY(0) scale(1); } }
+.student-caption { margin:9px 0 0; font-size:12px; line-height:1.65; color:#8a775f; }
+body:not([data-screen="demo"]) .stage-dialogue-coach { display:none; }
+
+/* Two explicit session controls keep the microphone open between commands. */
+.voice-session-panel { margin-top:15px; padding:13px; border:1px solid #d9e0c4; border-radius:16px; background:#f5f8ee; }
+.voice-session-heading { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px; }
+.voice-session-heading strong { font-size:12px; color:#567655; }
+.voice-session-heading span { font-size:11px; color:#80906f; }
+.voice-session-actions { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:stretch; }
+.voice-session-panel .mic-button { min-height:58px; grid-template-columns:36px minmax(0,1fr) auto; gap:8px; padding:8px 11px; }
+.voice-session-panel .mic-icon { width:34px; height:34px; }
+.voice-session-panel .mic-copy strong { font-size:14px; }
+.voice-session-panel .mic-copy small { font-size:11px; }
+.end-voice-button { min-height:58px; padding:8px 16px; border:1px solid #dcbaa7; border-radius:13px; background:#fff0e7; color:#9a6550; box-shadow:0 3px 0 #e8cdbd; cursor:pointer; font-size:13px; font-weight:700; }
+.end-voice-button span { margin-right:4px; font-size:9px; }
+.end-voice-button:hover:not(:disabled) { background:#ffe7da; }
+.end-voice-button:disabled { color:#a6a792; background:#f0f1e8; border-color:#d9dbcc; box-shadow:none; cursor:default; }
+.voice-session-panel .mic-button:disabled { cursor:default; }
+.voice-session-panel .mic-button:disabled:not(.listening) { opacity:.6; }
+.voice-session-panel .voice-transcript { margin:11px 0 0; padding:0 2px; background:none; color:#738166; font-size:12px; }
+body[data-screen="demo"] .voice-session-panel { display:none; }
+.input-panel .text-command-row { margin-top:0; }
+
+@media(max-width:760px) {
+  .stage-dialogue { width:calc(100% - 30px); padding:9px 11px 11px; border-radius:13px; }
+  .stage-dialogue-ai { left:14px; top:auto; bottom:18px; }
+  .stage-dialogue-coach { left:14px; top:54px; bottom:auto; }
+  .stage-dialogue-coach::after { left:auto; right:28px; }
+  .stage-dialogue .speech-bubble,.stage-dialogue p { font-size:13px; line-height:1.5; margin-top:4px; }
+  .dialogue-speaker { font-size:10px; }
+  .stage-toast { z-index:4; bottom:112px; }
+  .voice-session-panel { margin-top:12px; padding:11px; }
+  .voice-session-actions { gap:8px; }
+  .voice-session-panel .mic-button { grid-template-columns:30px minmax(0,1fr); gap:7px; padding:8px; }
+  .voice-session-panel .mic-icon { width:29px; height:29px; font-size:10px; }
+  .voice-session-panel .voice-bars { display:none; }
+  .voice-session-panel .mic-copy strong { font-size:14px; }
+  .voice-session-panel .mic-copy small { font-size:10px; }
+  .end-voice-button { padding:8px 11px; font-size:13px; }
+  .voice-session-panel .voice-transcript { font-size:11px; }
+}
+
+.stage-dialogue-ai.panicked { border-color:#e5b398; background:#fff3e6f5; }
+.stage-dialogue-ai.annoyed { border-color:#ccbdd6; }
+.stage-dialogue-ai.happy { border-color:#9fcba8; background:#f4fbedf5; }
+.log-entry.coach .log-avatar { color:#8d6b30; background:#ffe8c4; }
+
 </style>
 </head>
 <body>
@@ -793,7 +889,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
 
       <div class="top-actions">
         <button id="helpButton" class="icon-button" type="button" aria-label="查看玩法">?</button>
-        <button id="soundButton" class="icon-button" type="button" aria-label="切换声音" aria-pressed="true">🔊</button>
+        <button id="soundButton" class="icon-button" type="button" aria-label="切换指挥者讲解与音效" aria-pressed="true">🔊</button>
         <button id="resetButton" class="secondary-button" type="button">重新开练</button>
       </div>
     </header>
@@ -852,8 +948,32 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
             <span class="objective-dot"></span>
             目标：完整停进绿色车位并刹停
           </div>
+          <div id="stageCoachBubble" class="stage-dialogue stage-dialogue-coach">
+            <strong class="dialogue-speaker"><span aria-hidden="true">↗</span> 指挥者</strong>
+            <p id="stageCoachText" aria-live="polite">挂倒挡，观察车位，慢慢来。</p>
+          </div>
+          <div id="stageAIBubble" class="stage-dialogue stage-dialogue-ai">
+            <strong class="dialogue-speaker"><span aria-hidden="true">AI</span> AI 学员 · 小满</strong>
+            <p id="speechBubble" class="speech-bubble" aria-live="polite">教练，我今天一定能一把过。大概吧。</p>
+          </div>
           <div id="comicCaption" class="comic-caption" aria-hidden="true"></div>
           <div id="toast" class="stage-toast" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="voice-session-panel" aria-label="连续语音指挥">
+          <div class="voice-session-heading"><strong>连续语音指挥</strong><span>一次开启，全程听你</span></div>
+          <div class="voice-session-actions">
+            <button id="micButton" class="mic-button" type="button" aria-pressed="false" aria-describedby="voiceTranscript">
+              <span class="mic-icon" aria-hidden="true">●</span>
+              <span class="mic-copy">
+                <strong>开始监听</strong>
+                <small id="micHint">开启后持续监听</small>
+              </span>
+              <span class="voice-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            </button>
+            <button id="endVoiceButton" class="end-voice-button" type="button" disabled><span aria-hidden="true">■</span> 结束监听</button>
+          </div>
+          <div id="voiceTranscript" class="voice-transcript" role="status" aria-live="polite">开启一次即可连续说“倒车、停、前进”；“停”只停车，不结束监听。</div>
         </div>
 
         <div id="demoControls" class="demo-controls" hidden><button id="demoPause" class="secondary-button" type="button" aria-pressed="false">Ⅱ 暂停</button><span id="demoChapter">准备出发</span><progress id="demoProgress" max="1" value="0" aria-label="Demo 播放进度"></progress></div>
@@ -888,9 +1008,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
               <strong>AI 学员 · 小满</strong>
               <span id="listeningBadge" class="status-badge">等你发话</span>
             </div>
-            <div id="speechBubble" class="speech-bubble" aria-live="polite">
-              教练，我今天一定能一把过。大概吧。
-            </div>
+            <p class="student-caption">AI 回复显示在游戏气泡里。<br>看路、发话，安静指挥。</p>
           </div>
         </div>
 
@@ -908,17 +1026,6 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
         </div>
 
         <div class="input-panel">
-          <button id="micButton" class="mic-button" type="button" aria-pressed="false">
-            <span class="mic-icon">●</span>
-            <span class="mic-copy">
-              <strong>点一下开启实时语音</strong>
-              <small id="micHint">直接说指令 · 再点关闭并刹停</small>
-            </span>
-            <span class="voice-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-          </button>
-
-          <div id="voiceTranscript" class="voice-transcript" role="status" aria-live="polite">开启后，识别到指令就执行；“停车”优先。监听时 AI 用字幕回应。</div>
-
           <div class="text-command-row">
             <input id="commandInput" type="text" autocomplete="off" maxlength="100" placeholder="也可以打字：挂倒挡，左打死，慢慢倒" aria-label="输入驾驶指令" />
             <button id="sendButton" type="button">发送</button>
@@ -958,6 +1065,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
       <span class="section-kicker">HOW TO PLAY</span>
       <h2 id="helpTitle">你不能碰方向盘，只能发指令。</h2>
       <div class="help-steps">
+        <div><b>MIC</b><p><strong>点“开始监听”一次就够</strong><span>松手后继续听。车在倒车时直接说“停”，无需先按按钮；整局结束后再点“结束监听”。</span></p></div>
         <div><b>01</b><p><strong>先说挡位和方向</strong><span>例如“挂倒挡，方向盘向左打死，慢慢倒”。</span></p></div>
         <div><b>02</b><p><strong>观察车身角度</strong><span>车身转到竖直时说“回正，继续倒”。</span></p></div>
         <div><b>03</b><p><strong>停稳才算成功</strong><span>完整进入绿色车位后，记得明确说“停车”。</span></p></div>
@@ -991,7 +1099,8 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
     </section>
   </div>
 
-  <script>(() => {
+  <script>
+(() => {
   "use strict";
 
   const WORLD = { width: 1100, height: 700 };
@@ -1230,7 +1339,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
     updateHud();
     if (!keepModal) closeModal(dom.resultModal);
     if (!silent) {
-      setSisterSpeech("教练，我今天一定能一把过。大概吧。", "neutral", { speakIt: false, logIt: false });
+      setSisterSpeech("教练，我今天一定能一把过。大概吧。", "neutral", { logIt: false });
     }
   }
 
@@ -1281,12 +1390,29 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
     window.setTimeout(() => dom.avatar.classList.remove(kind), 480);
   }
 
-  function setSisterSpeech(text, emotion = "neutral", { speakIt = true, logIt = true } = {}) {
+  function setSisterSpeech(text, emotion = "neutral", { logIt = true } = {}) {
     dom.speechBubble.textContent = text;
     setAvatarMood(emotion);
     animateAvatar(emotion === "panicked" ? "crashed" : "reacting");
     if (logIt) addLog("student", "小满", text);
-    if (speakIt) speak(text);
+    animateStageDialogue("stageAIBubble", emotion);
+  }
+
+  function animateStageDialogue(id, mood = "neutral") {
+    const bubble = document.getElementById(id);
+    if (!bubble) return;
+    bubble.classList.remove("speaking", "panicked", "happy", "annoyed");
+    if (mood !== "neutral") bubble.classList.add(mood);
+    void bubble.offsetWidth;
+    bubble.classList.add("speaking");
+  }
+
+  function setCoachSpeech(text) {
+    const subtitle = document.getElementById("stageCoachText");
+    if (subtitle) subtitle.textContent = text;
+    animateStageDialogue("stageCoachBubble");
+    addLog("coach", "指挥者", text);
+    speak(text);
   }
 
   function speak(text) {
@@ -1308,7 +1434,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
 
     const entry = document.createElement("div");
     entry.className = `log-entry ${type}`;
-    const avatarText = type === "user" ? "你" : type === "student" ? "AI" : "AI";
+    const avatarText = type === "user" ? "你" : type === "coach" ? "教" : "AI";
     entry.innerHTML = `
       <div class="log-avatar">${avatarText}</div>
       <div class="log-content">
@@ -1676,6 +1802,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
     if (parsed.gear === "P") {
       car.gear = 0;
       car.targetSpeed = 0;
+      car.speed = 0;
       car.targetSteer = 0;
       return;
     }
@@ -1696,6 +1823,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
 
     if (parsed.stop) {
       car.targetSpeed = 0;
+      car.speed = 0;
       return;
     }
 
@@ -1723,9 +1851,11 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
 
   function updateVoiceButton(label) {
     dom.micButton.setAttribute("aria-pressed", String(voice.enabled));
+    dom.micButton.disabled = voice.enabled;
+    document.getElementById("endVoiceButton").disabled = !voice.enabled;
     dom.difficultySelect.disabled = voice.enabled;
     dom.micButton.classList[voice.enabled ? "add" : "remove"]("listening");
-    dom.micButton.querySelector("strong").textContent = label || (voice.enabled ? "实时监听中 · 点一下关闭" : "点一下开启实时语音");
+    dom.micButton.querySelector("strong").textContent = label || (voice.enabled ? "监听已开启 · 直接说指令" : "开始监听");
   }
 
   function brakeForVoiceDisconnect() {
@@ -1750,12 +1880,8 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
     if (wasActive) setBadge("语音已关闭");
   }
 
-  function toggleLiveVoice() {
-    if (voice.enabled) {
-      stopLiveVoice();
-      document.getElementById("voiceTranscript").textContent = "语音已关闭，车辆已刹停。";
-      return;
-    }
+  function startLiveVoice() {
+    if (voice.enabled) return;
     if (document.body.dataset.screen !== "practice" || game.finished) return;
     if (!RecognitionClass) {
       showToast("麦克风不可用：请使用文字或快捷指令", "", 3000);
@@ -1766,8 +1892,13 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
     voice.rapidEnds = 0;
     voice.lastFingerprint = "";
     window.speechSynthesis?.cancel();
-    document.getElementById("voiceTranscript").textContent = "正在连接语音，可以直接说：倒车、左转、回正、停车。";
+    document.getElementById("voiceTranscript").textContent = "正在开启持续监听。松手也会继续听；倒车时直接说“停”，不用再点按钮。";
     startLiveRecognition();
+  }
+
+  function endLiveVoice() {
+    stopLiveVoice();
+    document.getElementById("voiceTranscript").textContent = "监听已结束，车辆已刹停。下一局或继续练习时再点“开始监听”。";
   }
 
   function startLiveRecognition() {
@@ -1790,7 +1921,8 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
       voice.pending = false;
       game.listening = true;
       updateVoiceButton();
-      setBadge("实时听你指挥", "listening");
+      setBadge("持续监听中", "listening");
+      document.getElementById("voiceTranscript").textContent = "持续监听中：直接说“倒车、左转、回正、停”。说“停”只停车，不结束监听。";
     };
     recognition.onresult = event => {
       if (!current()) return;
@@ -2234,13 +2366,13 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
 
   // Demo choreography is cinematic; practice continues to use the vehicle physics.
   const demoScenes = [
-    { duration: 5, x: 820, y: 470, angle: 90, chapter: "01 / 自信出发", text: "放心，我一把过。你先别问，是哪一把。" },
-    { duration: 7, x: 1100, y: 470, angle: 90, crash: true, rush: true, target: "demo-wall", chapter: "02 / 油门当刹车", text: "踩刹车？这个踏板吧。", punchline: "砰！踩错了！墙没动，是我把油门当刹车了。" },
-    { duration: 5, x: 755, y: 450, angle: 115, chapter: "03 / 战术撤退", text: "倒回来。这叫战术撤退，不叫方向感欠费。" },
-    { duration: 7, x: 597, y: 205, angle: 180, crash: true, target: "left-car", chapter: "04 / 距离判断失误", text: "再倒一点，距离够的。", punchline: "砰！我说的够，是修车预算够。" },
-    { duration: 6, x: 820, y: 470, angle: 90, chapter: "05 / 认真三秒钟", text: "好了，认真。挂倒挡，向左打死，慢慢倒。" },
-    { duration: 7, x: 730, y: 330, angle: 180, chapter: "06 / 回正，继续倒", text: "车身正了，方向盘回正。刚才是喜剧，现在是技术。" },
-    { duration: 7, x: 730, y: 163, angle: 180, chapter: "07 / 终于停进去了", text: "进绿色车位，踩刹车。看！两次事故，一次奇迹。" },
+    { duration: 5, x: 820, y: 470, angle: 90, coach: "先看示范：只发指令，不碰方向盘。", chapter: "01 / 自信出发", text: "放心，我一把过。你先别问，是哪一把。" },
+    { duration: 7, x: 1100, y: 470, angle: 90, crash: true, rush: true, target: "demo-wall", coach: "往前一点，靠近墙时踩刹车。", chapter: "02 / 油门当刹车", text: "踩刹车？这个踏板吧。", punchline: "砰！踩错了！墙没动，是我把油门当刹车了。" },
+    { duration: 5, x: 755, y: 450, angle: 115, coach: "挂倒挡，慢慢退回起点。", chapter: "03 / 战术撤退", text: "倒回来。这叫战术撤退，不叫方向感欠费。" },
+    { duration: 7, x: 597, y: 205, angle: 180, crash: true, target: "left-car", coach: "慢慢倒，注意左侧车辆的距离。", chapter: "04 / 距离判断失误", text: "再倒一点，距离够的。", punchline: "砰！我说的够，是修车预算够。" },
+    { duration: 6, x: 820, y: 470, angle: 90, coach: "重新来：倒挡，左打死，慢慢倒。", chapter: "05 / 认真三秒钟", text: "好了，认真。挂倒挡，向左打死，慢慢倒。" },
+    { duration: 7, x: 730, y: 330, angle: 180, coach: "车身摆正后，方向盘回正。", chapter: "06 / 回正，继续倒", text: "车身正了，方向盘回正。刚才是喜剧，现在是技术。" },
+    { duration: 7, x: 730, y: 163, angle: 180, coach: "继续倒进绿色车位，然后停车。", chapter: "07 / 终于停进去了", text: "进绿色车位，踩刹车。看！两次事故，一次奇迹。" },
   ];
   let demoFrom = null;
   let demoSceneElapsed = 0;
@@ -2267,6 +2399,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
     visual.demoRush = 0;
     car.gear = game.demoPhase === 1 ? 1 : -1;
     setSisterSpeech(scene.text, "neutral");
+    setCoachSpeech(scene.coach);
     setBadge(`Demo · ${game.demoPhase + 1}/${demoScenes.length}`);
     document.getElementById("demoChapter").textContent = scene.chapter;
   }
@@ -2277,7 +2410,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
     demoLastUpdate = now;
     if (demoPaused) return;
     const scene = demoScenes[game.demoPhase];
-    // Playback controls change the animation timeline, never the narration rate.
+    // Playback controls change the animation timeline, never the coach narration rate.
     demoSceneElapsed += dt * Number(document.getElementById("demoSpeed").value);
     const t = clamp(demoSceneElapsed / (scene.duration * 0.55), 0, 1);
     const rushT = clamp((t - 0.35) / 0.65, 0, 1);
@@ -2303,7 +2436,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
     }
     document.getElementById("demoProgress").value = (game.demoPhase + clamp(demoSceneElapsed / scene.duration, 0, 1)) / demoScenes.length;
     updateHud();
-    // Let each punchline finish even at fast playback speeds.
+    // Let the coach finish each instruction; student replies are subtitles only.
     if (demoSceneElapsed < scene.duration || (!game.muted && window.speechSynthesis?.speaking)) return;
     game.demoPhase += 1;
     if (game.demoPhase < demoScenes.length) enterDemoScene();
@@ -2439,7 +2572,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
     document.getElementById("modeLabel").textContent = screen === "demo" ? "第一关 · 爆笑 Demo" : "第一关 · 自己尝试";
     resetGame({ silent: true });
     clearLog();
-    setSisterSpeech("教练，我今天一定能一把过。大概吧。", "neutral", { speakIt: false, logIt: false });
+    setSisterSpeech("教练，我今天一定能一把过。大概吧。", "neutral", { logIt: false });
     if (screen === "demo") startDemo();
     document.querySelector(screen === "home" ? ".home-hero .primary-button" : ".level-nav button").focus();
   }
@@ -2965,7 +3098,8 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
       if (document.hidden && game.demo) setDemoPaused(true);
       if (document.hidden) stopLiveVoice();
     });
-    dom.micButton.addEventListener("click", toggleLiveVoice);
+    dom.micButton.addEventListener("click", startLiveVoice);
+    document.getElementById("endVoiceButton").addEventListener("click", endLiveVoice);
     dom.clearLogButton.addEventListener("click", clearLog);
     dom.resetButton.addEventListener("click", () => {
       stopLiveVoice();
@@ -2980,7 +3114,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
       dom.soundButton.textContent = game.muted ? "🔇" : "🔊";
       dom.soundButton.setAttribute("aria-pressed", String(!game.muted));
       if (game.muted && "speechSynthesis" in window) window.speechSynthesis.cancel();
-      showToast(game.muted ? "角色语音已关闭" : "角色语音已开启");
+      showToast(game.muted ? "讲解与音效已关闭" : "讲解与音效已开启");
     });
     dom.demoButton.addEventListener("click", () => navigate(game.demo ? "practice" : "demo"));
     dom.helpButton.addEventListener("click", () => openModal(dom.helpModal));
@@ -3124,6 +3258,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
 
   init();
 })();
+
 </script>
 </body>
 </html>

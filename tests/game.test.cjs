@@ -40,6 +40,7 @@ function loadGame({ width = 390, recognition = false, fetch } = {}) {
     return {
       value: id === 'difficultySelect' ? '0.08' : id === 'demoSpeed' ? '1' : '',
       hidden: false, textContent: '', listeners: {}, children,
+      style: { setProperty: noop, removeProperty: noop },
       get innerHTML() { return html; },
       set innerHTML(value) { html = value; children.length = 0; },
       classList: { add: noop, remove: noop }, setAttribute: noop,
@@ -176,6 +177,46 @@ test('interim voice immediately reverses without waiting for release or final re
   assert.equal(userLogs().length, 1);
 });
 
+test('one start hears reverse, stop, and forward continuously, with no release or new recording', () => {
+  const game = startVoice();
+  const recognizer = game.recognizer;
+  const session = game.debug.snapshot().voice.session;
+  const reverse = recognizer.result('倒车');
+  game.debug.advance(0.5);
+  assert.ok(game.debug.snapshot().car.speed < 0, 'the car must actually move before testing a spoken stop');
+
+  game.element('micButton').listeners.pointerup?.({ preventDefault() {} });
+  game.element('micButton').listeners.click();
+  assert.equal(game.debug.snapshot().voice.enabled, true, 'release and another start must leave listening enabled');
+  assert.equal(game.recognizer, recognizer);
+  assert.equal(recognizer.starts, 1);
+  assert.equal(recognizer.aborts, 0);
+
+  const stop = recognizer.result('停', { index: 1, prior: [reverse] });
+  const stopped = game.debug.snapshot();
+  assert.equal(stopped.car.speed, 0, 'an interim stop must brake the actual car immediately');
+  assert.equal(stopped.car.targetSpeed, 0);
+  assert.equal(stopped.voice.enabled, true);
+  assert.equal(stopped.voice.session, session);
+  assert.equal(stopped.game.listening, true);
+  assert.equal(recognizer.active, true);
+  assert.equal(recognizer.aborts, 0);
+
+  recognizer.result('前进', { index: 2, prior: [reverse, stop] });
+  assert.ok(game.debug.snapshot().car.targetSpeed > 0);
+  game.debug.advance(0.5);
+  assert.ok(game.debug.snapshot().car.speed > 0);
+  assert.equal(recognizer.starts, 1, 'all three commands must use the same active recording');
+
+  game.element('endVoiceButton').listeners.click();
+  assert.equal(game.debug.snapshot().voice.enabled, false);
+  assert.equal(game.debug.snapshot().game.listening, false);
+  assert.equal(game.debug.snapshot().car.speed, 0);
+  assert.equal(game.debug.snapshot().car.targetSpeed, 0);
+  assert.equal(recognizer.active, false);
+  assert.equal(recognizer.aborts, 1);
+});
+
 test('interim refinements update steering and final duplicates do not add actions or logs', () => {
   const { debug, recognizer, userLogs } = startVoice();
   recognizer.result('往左');
@@ -290,6 +331,43 @@ test('live listening keeps character subtitles but suppresses voice feedback to 
   assert.ok(element('speechBubble').textContent.length > 0);
 });
 
+test('AI learner replies stay in the game bubble even when practice audio is enabled', () => {
+  const { debug, element, utterances } = loadGame();
+  debug.navigate('practice');
+  element('difficultySelect').value = '0';
+  for (const command of ['倒车', '停车', '嗯我想想', '前进']) {
+    element('commandInput').value = command;
+    element('sendButton').listeners.click();
+    assert.ok(element('speechBubble').textContent.length > 0);
+  }
+  assert.equal(utterances.length, 0, 'AI quips must never be spoken during practice');
+});
+
+test('demo speaks only coach narration and keeps the AI replies in a separate bubble', () => {
+  const { debug, element, utterances } = loadGame();
+  debug.navigate('demo');
+  assert.ok(element('stageCoachText').textContent.length > 0);
+  assert.ok(element('speechBubble').textContent.length > 0);
+  assert.notEqual(element('stageCoachText').textContent, element('speechBubble').textContent);
+  assert.equal(utterances[0].text, element('stageCoachText').textContent);
+
+  const coachCaptions = new Set([element('stageCoachText').textContent]);
+  const learnerCaptions = new Set([element('speechBubble').textContent]);
+  for (let now = 200; now <= 90000 && !debug.snapshot().game.finished; now += 200) {
+    debug.demoStep(now);
+    coachCaptions.add(element('stageCoachText').textContent);
+    learnerCaptions.add(element('speechBubble').textContent);
+  }
+  assert.equal(debug.snapshot().game.crashes, 2);
+  assert.equal(debug.snapshot().game.finished, true);
+  assert.ok(utterances.length > 1);
+  for (const utterance of utterances) {
+    assert.ok(coachCaptions.has(utterance.text), `spoken narration must have a coach caption: ${utterance.text}`);
+    assert.equal(learnerCaptions.has(utterance.text), false, `AI reply must stay silent: ${utterance.text}`);
+    assert.equal(utterance.rate, 1.02);
+  }
+});
+
 test('unrecognized speech produces no movement or command spam and final text gives an inline hint', () => {
   const { debug, recognizer, userLogs, element } = startVoice();
   recognizer.result('嗯');
@@ -302,7 +380,7 @@ test('unrecognized speech produces no movement or command spam and final text gi
   assert.match(hint, /指令|倒车|停车/);
 });
 
-test('normal recognition end restarts listening, while toggle off brakes and discards late events', () => {
+test('normal recognition end restarts listening, while the end button brakes and discards late events', () => {
   const game = startVoice();
   const first = game.recognizer;
   first.result('倒车');
@@ -317,7 +395,7 @@ test('normal recognition end restarts listening, while toggle off brakes and dis
   assert.ok(game.debug.snapshot().car.targetSpeed < 0);
   const staleResult = active.onresult;
   const staleEnd = active.onend;
-  game.element('micButton').listeners.click();
+  game.element('endVoiceButton').listeners.click();
   assert.equal(game.debug.snapshot().car.targetSpeed, 0);
   const starts = game.recognizers.reduce((sum, item) => sum + item.starts, 0);
   staleResult({ resultIndex: 0, results: [Object.assign([{ transcript: '倒车' }], { isFinal: true })] });
@@ -333,7 +411,7 @@ test('canceling pending recognition startup cannot leave listening or execute st
   game.element('difficultySelect').value = '0';
   game.element('micButton').listeners.click();
   const first = game.recognizer;
-  game.element('micButton').listeners.click();
+  game.element('endVoiceButton').listeners.click();
   game.advanceTimers(1000);
   first.result('倒车', { final: true });
   assert.equal(game.debug.snapshot().car.targetSpeed, 0);

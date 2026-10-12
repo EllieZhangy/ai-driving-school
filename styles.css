@@ -766,3 +766,97 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
 /* Continuous voice status stays separate from editable text commands. */
 .voice-transcript { margin-top:12px; padding:9px 11px; color:#6a785c; background:#f4f7eb; border-radius:10px; font-size:12px; line-height:1.6; overflow-wrap:anywhere; }
 .mic-button { touch-action:manipulation; }
+
+/* In-scene dialogue distinguishes the coach from the student without voiceover. */
+.stage-dialogue {
+  position:absolute;
+  z-index:3;
+  width:min(310px,38%);
+  padding:11px 14px 13px;
+  border:1px solid #c5dac0;
+  border-radius:16px;
+  background:#fffef5f2;
+  color:#4c6250;
+  box-shadow:0 4px 0 #aec6a045,0 8px 22px #5f795b12;
+  pointer-events:none;
+  overflow-wrap:anywhere;
+}
+.stage-dialogue::after {
+  content:"";
+  position:absolute;
+  bottom:-8px;
+  left:28px;
+  width:14px;
+  height:14px;
+  background:#fffef5;
+  border-right:1px solid #c5dac0;
+  border-bottom:1px solid #c5dac0;
+  transform:rotate(45deg);
+}
+.stage-dialogue-ai { left:16px; top:58px; }
+.stage-dialogue-coach { left:16px; bottom:30px; background:#fff4e7f5; border-color:#e5c99f; color:#785d35; box-shadow:0 4px 0 #e5c99f45,0 8px 22px #94754912; }
+.stage-dialogue-coach::after { background:#fff4e7; border-color:#e5c99f; }
+.dialogue-speaker { display:flex; align-items:center; gap:6px; font-size:10px; line-height:1.5; letter-spacing:.02em; }
+.dialogue-speaker span { display:grid; place-items:center; min-width:22px; height:18px; padding:0 3px; border-radius:6px; background:#e6efda; color:#658055; font-size:9px; }
+.stage-dialogue-coach .dialogue-speaker span { background:#ffe4bb; color:#95703c; font-size:14px; }
+.stage-dialogue .speech-bubble,.stage-dialogue p {
+  min-height:0;
+  margin:6px 0 0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:none;
+  box-shadow:none;
+  color:inherit;
+  font-size:14px;
+  font-weight:600;
+  line-height:1.55;
+}
+.stage-dialogue.speaking { animation:dialogueAppear .22s ease-out; }
+@keyframes dialogueAppear { from { opacity:.35; transform:translateY(5px) scale(.98); } to { opacity:1; transform:translateY(0) scale(1); } }
+.student-caption { margin:9px 0 0; font-size:12px; line-height:1.65; color:#8a775f; }
+body:not([data-screen="demo"]) .stage-dialogue-coach { display:none; }
+
+/* Two explicit session controls keep the microphone open between commands. */
+.voice-session-panel { margin-top:15px; padding:13px; border:1px solid #d9e0c4; border-radius:16px; background:#f5f8ee; }
+.voice-session-heading { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px; }
+.voice-session-heading strong { font-size:12px; color:#567655; }
+.voice-session-heading span { font-size:11px; color:#80906f; }
+.voice-session-actions { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:stretch; }
+.voice-session-panel .mic-button { min-height:58px; grid-template-columns:36px minmax(0,1fr) auto; gap:8px; padding:8px 11px; }
+.voice-session-panel .mic-icon { width:34px; height:34px; }
+.voice-session-panel .mic-copy strong { font-size:14px; }
+.voice-session-panel .mic-copy small { font-size:11px; }
+.end-voice-button { min-height:58px; padding:8px 16px; border:1px solid #dcbaa7; border-radius:13px; background:#fff0e7; color:#9a6550; box-shadow:0 3px 0 #e8cdbd; cursor:pointer; font-size:13px; font-weight:700; }
+.end-voice-button span { margin-right:4px; font-size:9px; }
+.end-voice-button:hover:not(:disabled) { background:#ffe7da; }
+.end-voice-button:disabled { color:#a6a792; background:#f0f1e8; border-color:#d9dbcc; box-shadow:none; cursor:default; }
+.voice-session-panel .mic-button:disabled { cursor:default; }
+.voice-session-panel .mic-button:disabled:not(.listening) { opacity:.6; }
+.voice-session-panel .voice-transcript { margin:11px 0 0; padding:0 2px; background:none; color:#738166; font-size:12px; }
+body[data-screen="demo"] .voice-session-panel { display:none; }
+.input-panel .text-command-row { margin-top:0; }
+
+@media(max-width:760px) {
+  .stage-dialogue { width:calc(100% - 30px); padding:9px 11px 11px; border-radius:13px; }
+  .stage-dialogue-ai { left:14px; top:auto; bottom:18px; }
+  .stage-dialogue-coach { left:14px; top:54px; bottom:auto; }
+  .stage-dialogue-coach::after { left:auto; right:28px; }
+  .stage-dialogue .speech-bubble,.stage-dialogue p { font-size:13px; line-height:1.5; margin-top:4px; }
+  .dialogue-speaker { font-size:10px; }
+  .stage-toast { z-index:4; bottom:112px; }
+  .voice-session-panel { margin-top:12px; padding:11px; }
+  .voice-session-actions { gap:8px; }
+  .voice-session-panel .mic-button { grid-template-columns:30px minmax(0,1fr); gap:7px; padding:8px; }
+  .voice-session-panel .mic-icon { width:29px; height:29px; font-size:10px; }
+  .voice-session-panel .voice-bars { display:none; }
+  .voice-session-panel .mic-copy strong { font-size:14px; }
+  .voice-session-panel .mic-copy small { font-size:10px; }
+  .end-voice-button { padding:8px 11px; font-size:13px; }
+  .voice-session-panel .voice-transcript { font-size:11px; }
+}
+
+.stage-dialogue-ai.panicked { border-color:#e5b398; background:#fff3e6f5; }
+.stage-dialogue-ai.annoyed { border-color:#ccbdd6; }
+.stage-dialogue-ai.happy { border-color:#9fcba8; background:#f4fbedf5; }
+.log-entry.coach .log-avatar { color:#8d6b30; background:#ffe8c4; }

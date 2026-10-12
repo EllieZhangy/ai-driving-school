@@ -237,7 +237,7 @@
     updateHud();
     if (!keepModal) closeModal(dom.resultModal);
     if (!silent) {
-      setSisterSpeech("教练，我今天一定能一把过。大概吧。", "neutral", { speakIt: false, logIt: false });
+      setSisterSpeech("教练，我今天一定能一把过。大概吧。", "neutral", { logIt: false });
     }
   }
 
@@ -288,12 +288,29 @@
     window.setTimeout(() => dom.avatar.classList.remove(kind), 480);
   }
 
-  function setSisterSpeech(text, emotion = "neutral", { speakIt = true, logIt = true } = {}) {
+  function setSisterSpeech(text, emotion = "neutral", { logIt = true } = {}) {
     dom.speechBubble.textContent = text;
     setAvatarMood(emotion);
     animateAvatar(emotion === "panicked" ? "crashed" : "reacting");
     if (logIt) addLog("student", "小满", text);
-    if (speakIt) speak(text);
+    animateStageDialogue("stageAIBubble", emotion);
+  }
+
+  function animateStageDialogue(id, mood = "neutral") {
+    const bubble = document.getElementById(id);
+    if (!bubble) return;
+    bubble.classList.remove("speaking", "panicked", "happy", "annoyed");
+    if (mood !== "neutral") bubble.classList.add(mood);
+    void bubble.offsetWidth;
+    bubble.classList.add("speaking");
+  }
+
+  function setCoachSpeech(text) {
+    const subtitle = document.getElementById("stageCoachText");
+    if (subtitle) subtitle.textContent = text;
+    animateStageDialogue("stageCoachBubble");
+    addLog("coach", "指挥者", text);
+    speak(text);
   }
 
   function speak(text) {
@@ -315,7 +332,7 @@
 
     const entry = document.createElement("div");
     entry.className = `log-entry ${type}`;
-    const avatarText = type === "user" ? "你" : type === "student" ? "AI" : "AI";
+    const avatarText = type === "user" ? "你" : type === "coach" ? "教" : "AI";
     entry.innerHTML = `
       <div class="log-avatar">${avatarText}</div>
       <div class="log-content">
@@ -683,6 +700,7 @@
     if (parsed.gear === "P") {
       car.gear = 0;
       car.targetSpeed = 0;
+      car.speed = 0;
       car.targetSteer = 0;
       return;
     }
@@ -703,6 +721,7 @@
 
     if (parsed.stop) {
       car.targetSpeed = 0;
+      car.speed = 0;
       return;
     }
 
@@ -730,9 +749,11 @@
 
   function updateVoiceButton(label) {
     dom.micButton.setAttribute("aria-pressed", String(voice.enabled));
+    dom.micButton.disabled = voice.enabled;
+    document.getElementById("endVoiceButton").disabled = !voice.enabled;
     dom.difficultySelect.disabled = voice.enabled;
     dom.micButton.classList[voice.enabled ? "add" : "remove"]("listening");
-    dom.micButton.querySelector("strong").textContent = label || (voice.enabled ? "实时监听中 · 点一下关闭" : "点一下开启实时语音");
+    dom.micButton.querySelector("strong").textContent = label || (voice.enabled ? "监听已开启 · 直接说指令" : "开始监听");
   }
 
   function brakeForVoiceDisconnect() {
@@ -757,12 +778,8 @@
     if (wasActive) setBadge("语音已关闭");
   }
 
-  function toggleLiveVoice() {
-    if (voice.enabled) {
-      stopLiveVoice();
-      document.getElementById("voiceTranscript").textContent = "语音已关闭，车辆已刹停。";
-      return;
-    }
+  function startLiveVoice() {
+    if (voice.enabled) return;
     if (document.body.dataset.screen !== "practice" || game.finished) return;
     if (!RecognitionClass) {
       showToast("麦克风不可用：请使用文字或快捷指令", "", 3000);
@@ -773,8 +790,13 @@
     voice.rapidEnds = 0;
     voice.lastFingerprint = "";
     window.speechSynthesis?.cancel();
-    document.getElementById("voiceTranscript").textContent = "正在连接语音，可以直接说：倒车、左转、回正、停车。";
+    document.getElementById("voiceTranscript").textContent = "正在开启持续监听。松手也会继续听；倒车时直接说“停”，不用再点按钮。";
     startLiveRecognition();
+  }
+
+  function endLiveVoice() {
+    stopLiveVoice();
+    document.getElementById("voiceTranscript").textContent = "监听已结束，车辆已刹停。下一局或继续练习时再点“开始监听”。";
   }
 
   function startLiveRecognition() {
@@ -797,7 +819,8 @@
       voice.pending = false;
       game.listening = true;
       updateVoiceButton();
-      setBadge("实时听你指挥", "listening");
+      setBadge("持续监听中", "listening");
+      document.getElementById("voiceTranscript").textContent = "持续监听中：直接说“倒车、左转、回正、停”。说“停”只停车，不结束监听。";
     };
     recognition.onresult = event => {
       if (!current()) return;
@@ -1241,13 +1264,13 @@
 
   // Demo choreography is cinematic; practice continues to use the vehicle physics.
   const demoScenes = [
-    { duration: 5, x: 820, y: 470, angle: 90, chapter: "01 / 自信出发", text: "放心，我一把过。你先别问，是哪一把。" },
-    { duration: 7, x: 1100, y: 470, angle: 90, crash: true, rush: true, target: "demo-wall", chapter: "02 / 油门当刹车", text: "踩刹车？这个踏板吧。", punchline: "砰！踩错了！墙没动，是我把油门当刹车了。" },
-    { duration: 5, x: 755, y: 450, angle: 115, chapter: "03 / 战术撤退", text: "倒回来。这叫战术撤退，不叫方向感欠费。" },
-    { duration: 7, x: 597, y: 205, angle: 180, crash: true, target: "left-car", chapter: "04 / 距离判断失误", text: "再倒一点，距离够的。", punchline: "砰！我说的够，是修车预算够。" },
-    { duration: 6, x: 820, y: 470, angle: 90, chapter: "05 / 认真三秒钟", text: "好了，认真。挂倒挡，向左打死，慢慢倒。" },
-    { duration: 7, x: 730, y: 330, angle: 180, chapter: "06 / 回正，继续倒", text: "车身正了，方向盘回正。刚才是喜剧，现在是技术。" },
-    { duration: 7, x: 730, y: 163, angle: 180, chapter: "07 / 终于停进去了", text: "进绿色车位，踩刹车。看！两次事故，一次奇迹。" },
+    { duration: 5, x: 820, y: 470, angle: 90, coach: "先看示范：只发指令，不碰方向盘。", chapter: "01 / 自信出发", text: "放心，我一把过。你先别问，是哪一把。" },
+    { duration: 7, x: 1100, y: 470, angle: 90, crash: true, rush: true, target: "demo-wall", coach: "往前一点，靠近墙时踩刹车。", chapter: "02 / 油门当刹车", text: "踩刹车？这个踏板吧。", punchline: "砰！踩错了！墙没动，是我把油门当刹车了。" },
+    { duration: 5, x: 755, y: 450, angle: 115, coach: "挂倒挡，慢慢退回起点。", chapter: "03 / 战术撤退", text: "倒回来。这叫战术撤退，不叫方向感欠费。" },
+    { duration: 7, x: 597, y: 205, angle: 180, crash: true, target: "left-car", coach: "慢慢倒，注意左侧车辆的距离。", chapter: "04 / 距离判断失误", text: "再倒一点，距离够的。", punchline: "砰！我说的够，是修车预算够。" },
+    { duration: 6, x: 820, y: 470, angle: 90, coach: "重新来：倒挡，左打死，慢慢倒。", chapter: "05 / 认真三秒钟", text: "好了，认真。挂倒挡，向左打死，慢慢倒。" },
+    { duration: 7, x: 730, y: 330, angle: 180, coach: "车身摆正后，方向盘回正。", chapter: "06 / 回正，继续倒", text: "车身正了，方向盘回正。刚才是喜剧，现在是技术。" },
+    { duration: 7, x: 730, y: 163, angle: 180, coach: "继续倒进绿色车位，然后停车。", chapter: "07 / 终于停进去了", text: "进绿色车位，踩刹车。看！两次事故，一次奇迹。" },
   ];
   let demoFrom = null;
   let demoSceneElapsed = 0;
@@ -1274,6 +1297,7 @@
     visual.demoRush = 0;
     car.gear = game.demoPhase === 1 ? 1 : -1;
     setSisterSpeech(scene.text, "neutral");
+    setCoachSpeech(scene.coach);
     setBadge(`Demo · ${game.demoPhase + 1}/${demoScenes.length}`);
     document.getElementById("demoChapter").textContent = scene.chapter;
   }
@@ -1284,7 +1308,7 @@
     demoLastUpdate = now;
     if (demoPaused) return;
     const scene = demoScenes[game.demoPhase];
-    // Playback controls change the animation timeline, never the narration rate.
+    // Playback controls change the animation timeline, never the coach narration rate.
     demoSceneElapsed += dt * Number(document.getElementById("demoSpeed").value);
     const t = clamp(demoSceneElapsed / (scene.duration * 0.55), 0, 1);
     const rushT = clamp((t - 0.35) / 0.65, 0, 1);
@@ -1310,7 +1334,7 @@
     }
     document.getElementById("demoProgress").value = (game.demoPhase + clamp(demoSceneElapsed / scene.duration, 0, 1)) / demoScenes.length;
     updateHud();
-    // Let each punchline finish even at fast playback speeds.
+    // Let the coach finish each instruction; student replies are subtitles only.
     if (demoSceneElapsed < scene.duration || (!game.muted && window.speechSynthesis?.speaking)) return;
     game.demoPhase += 1;
     if (game.demoPhase < demoScenes.length) enterDemoScene();
@@ -1446,7 +1470,7 @@
     document.getElementById("modeLabel").textContent = screen === "demo" ? "第一关 · 爆笑 Demo" : "第一关 · 自己尝试";
     resetGame({ silent: true });
     clearLog();
-    setSisterSpeech("教练，我今天一定能一把过。大概吧。", "neutral", { speakIt: false, logIt: false });
+    setSisterSpeech("教练，我今天一定能一把过。大概吧。", "neutral", { logIt: false });
     if (screen === "demo") startDemo();
     document.querySelector(screen === "home" ? ".home-hero .primary-button" : ".level-nav button").focus();
   }
@@ -1972,7 +1996,8 @@
       if (document.hidden && game.demo) setDemoPaused(true);
       if (document.hidden) stopLiveVoice();
     });
-    dom.micButton.addEventListener("click", toggleLiveVoice);
+    dom.micButton.addEventListener("click", startLiveVoice);
+    document.getElementById("endVoiceButton").addEventListener("click", endLiveVoice);
     dom.clearLogButton.addEventListener("click", clearLog);
     dom.resetButton.addEventListener("click", () => {
       stopLiveVoice();
@@ -1987,7 +2012,7 @@
       dom.soundButton.textContent = game.muted ? "🔇" : "🔊";
       dom.soundButton.setAttribute("aria-pressed", String(!game.muted));
       if (game.muted && "speechSynthesis" in window) window.speechSynthesis.cancel();
-      showToast(game.muted ? "角色语音已关闭" : "角色语音已开启");
+      showToast(game.muted ? "讲解与音效已关闭" : "讲解与音效已开启");
     });
     dom.demoButton.addEventListener("click", () => navigate(game.demo ? "practice" : "demo"));
     dom.helpButton.addEventListener("click", () => openModal(dom.helpModal));

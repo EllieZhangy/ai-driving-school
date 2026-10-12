@@ -27,11 +27,11 @@ GitHub's repository file viewer does not run the game. Use the deployed website 
 - A lightweight 2.5D canvas diorama: angled ground, layered car bodies, glass shading, shadows, and a raised training platform. This is not a WebGL 3D engine.
 - Two scripted comedy crashes: a sudden accelerator/brake mix-up into a visible wall, then reversing into a parked car. Swept contact checks stop the car at the first touching edge. Impact-point bursts, directional sparks, smoke, screen shake and synthesized crash audio accompany the punchlines before a successful parking finish.
 - Base demo timeline is about 44 seconds, plus time needed for narration to finish. Playback options are 0.75x, 1x, and 1.25x.
-- Playback speed controls animation timing only. Chinese narration stays at a natural rate and each punchline finishes before the next chapter.
+- Playback speed controls animation timing only. Chinese coach narration stays at a natural rate and finishes before the next chapter; AI punchlines remain readable in the scene bubble.
 - Pause/resume and progress indicators. Leaving the tab pauses the demo.
 - Practice retains steering physics, braking, collision penalties, scores, subtitles, and character reactions.
-- Tap the microphone once to enable continuous live listening, and tap again to turn it off and brake. Recognized interim commands execute immediately through local parsing; repeated or finalized transcripts do not replay actions.
-- Live voice commands bypass intentional mishearing and model round trips. Stop/brake commands take priority and invalidate older pending actions. Character responses remain subtitled during listening to prevent speech feedback.
+- Use two explicit buttons: **Start listening** opens one continuous session; **End listening** closes it and brakes. Releasing the start button does not end recording. Say reverse, stop, and forward within that same session; a spoken stop affects only the vehicle. Recognized interim commands execute immediately through local parsing; repeated or finalized transcripts do not replay actions.
+- Live voice commands bypass intentional mishearing and model round trips. Stop/brake commands take priority, set both physical and target speed to zero immediately, and invalidate older pending actions. AI student replies are always silent speech bubbles inside the game scene. Demo instructions have a separate coach bubble and are the only synthesized narration, preventing speaker confusion.
 - If recognition ends naturally, the car brakes while the microphone reconnects and waits for a fresh command. Errors, leaving practice, switching away from the page, or finishing a round end live listening and stop movement.
 - Text input and command chips remain available when speech recognition cannot run.
 
