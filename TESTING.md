@@ -6,7 +6,7 @@ Date: 2026-10-12
 
 - JavaScript syntax checks for the game and server.
 - Five automated behavioral tests using a minimal browser adapter: mobile/desktop setup; exactly two demo collisions and successful final parking; clean practice reset and physics parking success; playback timing independent of narration rate; pause/resume; speech completion gating and replay; cancellation or empty recording cannot submit an old command.
-- A 390 x 844 CSS-pixel viewport preview in the Codex in-app browser: portrait home layout, level entry, angled parking scene, playback selector, captions, and progress controls. This is a desktop browser viewport check, not an iPhone hardware test.
+- A 390 x 844 CSS-pixel viewport preview in the Codex in-app browser: portrait home layout, level entry, candy-colored UI, angled parking scene, garden props, playback selector, captions, and progress controls. This is a desktop browser viewport check, not an iPhone hardware test.
 - Public Pages deployment is verified separately through its workflow result and HTTP response.
 
 ## Not yet verified on physical devices

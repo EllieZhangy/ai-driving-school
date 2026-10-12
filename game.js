@@ -57,8 +57,8 @@
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
   const obstacles = [
-    { id: "left-car", type: "car", x: 597, y: 161, width: 62, length: 166, angle: 0, color: "#6f8fb7", label: "左侧车辆" },
-    { id: "right-car", type: "car", x: 863, y: 161, width: 62, length: 166, angle: 0, color: "#9d7e89", label: "右侧车辆" },
+    { id: "left-car", type: "car", x: 597, y: 161, width: 62, length: 166, angle: 0, color: "#a5cfd7", label: "左侧车辆" },
+    { id: "right-car", type: "car", x: 863, y: 161, width: 62, length: 166, angle: 0, color: "#dab0d0", label: "右侧车辆" },
     { id: "island-left", type: "rect", x: 28, y: 24, width: 465, height: 22, angle: 0, color: "#d6d0bf", label: "路沿" },
     { id: "island-right", type: "rect", x: 951, y: 24, width: 121, height: 22, angle: 0, color: "#d6d0bf", label: "路沿" },
   ];
@@ -1277,17 +1277,18 @@
     const shakeY = visual.shake ? (Math.random() - 0.5) * visual.shake : 0;
     ctx.translate(shakeX, shakeY);
 
-    ctx.fillStyle = "#18313c";
+    ctx.fillStyle = "#d7eccf";
     ctx.fillRect(0, 0, renderWidth, renderHeight);
     // Project the simulation plane as a diorama; collision coordinates stay unchanged.
     if (renderWidth === 720) {
       const cameraX = clamp(Math.min(car.x - 230, 410), 0, 410);
       ctx.transform(0.86, 0.07, -0.13, 0.88, 74 - cameraX * 0.86, 85);
     } else ctx.transform(0.83, 0.075, -0.18, 0.79, 165, 22);
-    ctx.fillStyle = "#101f28";
+    ctx.fillStyle = "#b6c899";
     roundRect(ctx, 0, 26, WORLD.width, WORLD.height, 26);
     ctx.fill();
     drawGround();
+    drawGarden();
     drawParkingLayout();
     drawSkidMarks();
     drawTargetBay();
@@ -1303,12 +1304,12 @@
 
   function drawGround() {
     const gradient = ctx.createLinearGradient(0, 0, 0, WORLD.height);
-    gradient.addColorStop(0, "#66828a");
-    gradient.addColorStop(1, "#405d66");
+    gradient.addColorStop(0, "#f3e6c8");
+    gradient.addColorStop(1, "#e4cfad");
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, WORLD.width, WORLD.height);
 
-    ctx.fillStyle = "#4c6971";
+    ctx.fillStyle = "#ddc59e";
     ctx.fillRect(0, 300, WORLD.width, 350);
 
     for (const point of noisePoints) {
@@ -1320,15 +1321,76 @@
     }
     ctx.globalAlpha = 1;
 
-    ctx.fillStyle = "#20232a";
+    ctx.fillStyle = "#a8c88d";
     ctx.fillRect(0, 650, WORLD.width, 50);
-    ctx.fillStyle = "#e9db83";
+    ctx.fillStyle = "#fff1c5";
     ctx.fillRect(0, 650, WORLD.width, 4);
+  }
+
+  // Garden props decorate the edge of the diorama and do not alter driving rules.
+  function drawGarden() {
+    ctx.save();
+    ctx.fillStyle = "#c5dba4";
+    roundRect(ctx, 18, 55, 332, 238, 25); ctx.fill();
+    ctx.fillStyle = "#e8edc5";
+    roundRect(ctx, 48, 95, 265, 150, 18); ctx.fill();
+    drawClubhouse(105, 160);
+    for (const [x, y, scale] of [[42, 110, 1], [325, 110, .85], [54, 270, .8], [322, 270, .8], [462, 697, .9], [632, 705, .65], [1002, 698, .85]]) drawTree(x, y, scale);
+    drawFlowerBed(550, 684, 62);
+    drawFlowerBed(840, 684, 95);
+    drawSchoolSign(965, 27);
+    ctx.restore();
+  }
+
+  function drawTree(x, y, scale) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
+    ctx.fillStyle = "rgba(77,119,65,.18)";
+    ctx.beginPath(); ctx.ellipse(9, 4, 36, 12, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#bc9670"; roundRect(ctx, -6, -35, 12, 39, 5); ctx.fill();
+    const lobes = [[0,-51,30,"#72b47b"],[-18,-41,23,"#91c58b"],[18,-46,24,"#a6d193"],[0,-63,23,"#bcdfa6"]];
+    for (const [cx,cy,r,color] of lobes) { ctx.fillStyle=color; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); }
+    ctx.fillStyle = "#eef6c6"; ctx.beginPath(); ctx.ellipse(-9,-67,11,6,-.45,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawFlowerBed(x, y, width) {
+    ctx.save(); ctx.translate(x,y);
+    ctx.fillStyle = "#bb9473"; roundRect(ctx,-width/2,-5,width,14,7); ctx.fill();
+    ctx.fillStyle = "#819b63"; roundRect(ctx,-width/2+3,-10,width-6,12,6); ctx.fill();
+    for (let i=0;i<Math.floor(width/13);i+=1) {
+      const px=-width/2+9+i*13;
+      ctx.fillStyle=i%2 ? "#f1a8b5" : "#ffdd88";
+      for (let petal=0;petal<5;petal+=1) { const a=petal*Math.PI*2/5; ctx.beginPath(); ctx.arc(px+Math.cos(a)*3,-14+Math.sin(a)*3,3,0,Math.PI*2); ctx.fill(); }
+      ctx.fillStyle="#fff8dd"; ctx.beginPath(); ctx.arc(px,-14,2,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawClubhouse(x, y) {
+    ctx.save(); ctx.translate(x,y);
+    ctx.fillStyle="#b1be8c"; roundRect(ctx,7,14,148,75,12); ctx.fill();
+    ctx.fillStyle="#fff3d8"; roundRect(ctx,0,-12,146,91,10); ctx.fill();
+    ctx.fillStyle="#e99b86"; ctx.beginPath(); ctx.moveTo(-12,-11); ctx.lineTo(72,-55); ctx.lineTo(158,-11); ctx.closePath(); ctx.fill();
+    ctx.fillStyle="#f9c4a7"; ctx.beginPath(); ctx.moveTo(-12,-11); ctx.lineTo(72,-55); ctx.lineTo(72,-11); ctx.closePath(); ctx.fill();
+    ctx.fillStyle="#9bc8c7"; roundRect(ctx,15,5,34,35,7); ctx.fill(); roundRect(ctx,100,5,30,35,7); ctx.fill();
+    ctx.fillStyle="#bcba84"; roundRect(ctx,60,20,25,59,6); ctx.fill();
+    ctx.fillStyle="#fff9e5"; ctx.fillRect(29,5,3,35); ctx.fillRect(15,21,34,3);
+    ctx.fillStyle="#827452"; ctx.font="700 10px system-ui"; ctx.textAlign="center"; ctx.fillText("小满驾校",72,9);
+    ctx.restore();
+  }
+
+  function drawSchoolSign(x, y) {
+    ctx.save(); ctx.translate(x,y);
+    ctx.fillStyle="#b99472"; roundRect(ctx,-3,0,6,23,3); ctx.fill();
+    ctx.fillStyle="#ffe6a6"; roundRect(ctx,-48,-25,96,28,9); ctx.fill();
+    ctx.strokeStyle="#cfa867"; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle="#867045"; ctx.font="700 12px system-ui"; ctx.textAlign="center"; ctx.fillText("今日宜倒车 ♡",0,-7);
+    ctx.restore();
   }
 
   function drawParkingLayout() {
     ctx.save();
-    ctx.strokeStyle = "rgba(244, 244, 239, 0.72)";
+    ctx.strokeStyle = "#fffdf0";
     ctx.lineWidth = 4;
     ctx.setLineDash([]);
 
@@ -1344,7 +1406,7 @@
     ctx.lineTo(1055, 38);
     ctx.stroke();
 
-    ctx.strokeStyle = "rgba(255,255,255,0.25)";
+    ctx.strokeStyle = "rgba(255,253,238,0.8)";
     ctx.lineWidth = 3;
     ctx.setLineDash([22, 18]);
     ctx.beginPath();
@@ -1358,12 +1420,12 @@
     drawRoadArrow(1030, 425, Math.PI / 2);
     drawRoadArrow(1030, 545, -Math.PI / 2);
 
-    ctx.fillStyle = "rgba(255,255,255,0.36)";
+    ctx.fillStyle = "#8a7556";
     ctx.font = "700 14px 'Noto Sans SC', sans-serif";
     ctx.textAlign = "left";
-    ctx.fillText("科目二封闭训练场", 48, 626);
+    ctx.fillText("小满的驾校 · 今日宜嘴硬", 48, 626);
     ctx.font = "600 10px 'DM Sans', sans-serif";
-    ctx.fillStyle = "rgba(255,255,255,0.22)";
+    ctx.fillStyle = "#a38b66";
     ctx.fillText("AI DRIVING TEST AREA · VOICE CONTROL ONLY", 48, 643);
     ctx.restore();
   }
@@ -1372,7 +1434,7 @@
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(rotation);
-    ctx.fillStyle = "rgba(255,255,255,0.18)";
+    ctx.fillStyle = "#fdf3d9";
     ctx.beginPath();
     ctx.moveTo(0, -25);
     ctx.lineTo(17, -4);
@@ -1389,11 +1451,11 @@
   function drawTargetBay() {
     const pulse = 0.5 + Math.sin(visual.targetPulse * 2.4) * 0.5;
     ctx.save();
-    ctx.fillStyle = `rgba(88, 227, 154, ${0.09 + pulse * 0.035})`;
+    ctx.fillStyle = `rgba(83, 169, 113, ${0.23 + pulse * 0.08})`;
     roundRect(ctx, TARGET.x + 5, TARGET.y + 5, TARGET.width - 10, TARGET.height - 10, 8);
     ctx.fill();
 
-    ctx.strokeStyle = `rgba(88, 227, 154, ${0.62 + pulse * 0.25})`;
+    ctx.strokeStyle = `rgba(62, 140, 83, ${0.70 + pulse * 0.25})`;
     ctx.lineWidth = 4;
     ctx.setLineDash([12, 9]);
     roundRect(ctx, TARGET.x + 5, TARGET.y + 5, TARGET.width - 10, TARGET.height - 10, 8);
@@ -1403,10 +1465,10 @@
     ctx.translate(TARGET.x + TARGET.width / 2, TARGET.y + TARGET.height / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.textAlign = "center";
-    ctx.fillStyle = "rgba(151, 255, 200, 0.72)";
+    ctx.fillStyle = "#4f8550";
     ctx.font = "800 15px 'Noto Sans SC', sans-serif";
     ctx.fillText("目标车位", 0, -7);
-    ctx.fillStyle = "rgba(151, 255, 200, 0.42)";
+    ctx.fillStyle = "#63935d";
     ctx.font = "700 10px 'DM Sans', sans-serif";
     ctx.fillText("PARK HERE", 0, 10);
     ctx.restore();
@@ -1438,20 +1500,20 @@
     ctx.save();
     ctx.translate(obstacle.x, obstacle.y + 7);
     ctx.rotate(obstacle.angle || 0);
-    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.fillStyle = "rgba(116,91,58,0.18)";
     roundRect(ctx, -obstacle.width / 2 + 5, -obstacle.length / 2 + 8, obstacle.width, obstacle.length, 17);
     ctx.fill();
 
-    ctx.fillStyle = "#29414b";
+    ctx.fillStyle = "#a78e9d";
     roundRect(ctx, -obstacle.width / 2 + 3, -obstacle.length / 2 + 12, obstacle.width, obstacle.length, 16);
     ctx.fill();
     const paint = ctx.createLinearGradient(-obstacle.width / 2, 0, obstacle.width / 2, 0);
-    paint.addColorStop(0, obstacle.color); paint.addColorStop(0.45, "#d1e0e5"); paint.addColorStop(1, obstacle.color);
+    paint.addColorStop(0, obstacle.color); paint.addColorStop(0.45, "#fceafa"); paint.addColorStop(1, obstacle.color);
     ctx.fillStyle = paint;
     roundRect(ctx, -obstacle.width / 2, -obstacle.length / 2, obstacle.width, obstacle.length, 16);
     ctx.fill();
 
-    ctx.fillStyle = "rgba(22,32,44,0.78)";
+    ctx.fillStyle = "#85acb9";
     roundRect(ctx, -obstacle.width / 2 + 8, -obstacle.length / 2 + 28, obstacle.width - 16, 42, 8);
     ctx.fill();
     roundRect(ctx, -obstacle.width / 2 + 8, 9, obstacle.width - 16, 40, 8);
@@ -1474,7 +1536,7 @@
       ctx.beginPath();
       ctx.ellipse(4, 8, 15, 7, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "#f48a2e";
+      ctx.fillStyle = "#ee987d";
       ctx.beginPath();
       ctx.moveTo(0, -17);
       ctx.lineTo(11, 9);
@@ -1483,7 +1545,7 @@
       ctx.fill();
       ctx.fillStyle = "#f4f0e7";
       ctx.fillRect(-7, -1, 14, 5);
-      ctx.fillStyle = "#d86f1e";
+      ctx.fillStyle = "#ce8067";
       roundRect(ctx, -14, 8, 28, 6, 3);
       ctx.fill();
       ctx.restore();
@@ -1510,7 +1572,7 @@
     ctx.save();
     ctx.translate(car.x + 6, car.y + 9);
     ctx.rotate(car.angle);
-    ctx.fillStyle = "rgba(0,0,0,0.36)";
+    ctx.fillStyle = "rgba(116,91,58,0.22)";
     roundRect(ctx, -CAR_SPEC.width / 2, -CAR_SPEC.length / 2, CAR_SPEC.width, CAR_SPEC.length, 15);
     ctx.fill();
     ctx.restore();
@@ -1519,7 +1581,7 @@
     const bounce = visual.impact > 0 ? Math.sin(visual.impact * 18) * visual.impact * 5 : 0;
     ctx.translate(car.x, car.y - Math.abs(bounce));
     ctx.rotate(car.angle);
-    ctx.fillStyle = "#996020";
+    ctx.fillStyle = "#c88f47";
     roundRect(ctx, -CAR_SPEC.width / 2 + 2, -CAR_SPEC.length / 2 + 11, CAR_SPEC.width, CAR_SPEC.length, 14);
     ctx.fill();
 
@@ -1529,15 +1591,15 @@
     drawWheel(CAR_SPEC.width / 2 + 1, CAR_SPEC.length / 2 - 20, 0);
 
     const bodyGradient = ctx.createLinearGradient(-CAR_SPEC.width / 2, 0, CAR_SPEC.width / 2, 0);
-    bodyGradient.addColorStop(0, "#e8b72e");
-    bodyGradient.addColorStop(0.48, "#ffdc50");
-    bodyGradient.addColorStop(1, "#d89c1e");
+    bodyGradient.addColorStop(0, "#edb75b");
+    bodyGradient.addColorStop(0.48, "#ffe5a0");
+    bodyGradient.addColorStop(1, "#e9ae50");
     ctx.fillStyle = bodyGradient;
     roundRect(ctx, -CAR_SPEC.width / 2, -CAR_SPEC.length / 2, CAR_SPEC.width, CAR_SPEC.length, 14);
     ctx.fill();
 
     const glass = ctx.createLinearGradient(-16, -25, 16, 30);
-    glass.addColorStop(0, "#a1e4e8"); glass.addColorStop(.4, "#446b7b"); glass.addColorStop(1, "#172d41");
+    glass.addColorStop(0, "#e2f5f4"); glass.addColorStop(.4, "#9cccd1"); glass.addColorStop(1, "#71a4b5");
     ctx.fillStyle = glass;
     roundRect(ctx, -CAR_SPEC.width / 2 + 7, -CAR_SPEC.length / 2 + 18, CAR_SPEC.width - 14, 27, 7);
     ctx.fill();
@@ -1599,7 +1661,7 @@
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(steerAngle);
-    ctx.fillStyle = "#15171c";
+    ctx.fillStyle = "#746953";
     roundRect(ctx, -4, -10, 8, 20, 3);
     ctx.fill();
     ctx.restore();
@@ -1618,7 +1680,7 @@
     ctx.stroke();
     for (let i = 0; i < 7; i += 1) {
       const a = i / 7 * Math.PI * 2;
-      ctx.fillStyle = i % 2 ? "#ffae56" : "#d3dde0";
+      ctx.fillStyle = i % 2 ? "#ffbc94" : "#fff0dc";
       ctx.beginPath();
       ctx.arc(Math.cos(a) * age * 48, Math.sin(a) * age * 30 - age * 35, 14 + age * 13, 0, Math.PI * 2);
       ctx.fill();
