@@ -111,3 +111,49 @@ test('hold-to-talk cancellation discards text and empty recording cannot send an
   assert.equal(debug.snapshot().game.started, false);
   assert.equal(debug.snapshot().car.targetSpeed, 0);
 });
+
+test('wall approach hesitates, then accelerates sharply without crossing the wall', () => {
+  const { debug } = loadGame();
+  debug.navigate('demo'); debug.demoStep(5000);
+  assert.equal(debug.snapshot().demo.phase, 1);
+  const start = debug.snapshot().car.x;
+  debug.demoStep(6000); assert.equal(debug.snapshot().car.x, start);
+  debug.demoStep(7800); const x1 = debug.snapshot().car.x;
+  debug.demoStep(8000); const x2 = debug.snapshot().car.x;
+  debug.demoStep(8200); const x3 = debug.snapshot().car.x;
+  assert.ok(x3 - x2 > x2 - x1, 'the late approach must accelerate');
+  debug.demoStep(8800);
+  const hit = debug.snapshot();
+  assert.equal(hit.game.crashes, 1);
+  assert.ok(Math.abs(hit.car.x + 46 - 1062) < .01);
+  assert.equal(debug.overlapsDemoTarget('demo-wall'), false);
+  assert.equal(hit.impact.x, 1062);
+});
+
+test('both crashes stop at first contact at every playback speed and coarse frames', () => {
+  for (const speed of ['0.75', '1', '1.25']) {
+    for (const frameMs of [16, 250, 1000]) {
+      const { debug, element } = loadGame();
+      debug.navigate('demo'); element('demoSpeed').value = speed;
+      let checkedCrashes = 0;
+      for (let now = frameMs; now <= 90000; now += frameMs) {
+        debug.demoStep(now);
+        const state = debug.snapshot();
+        if (state.game.crashes > checkedCrashes) {
+          checkedCrashes = state.game.crashes;
+          const target = checkedCrashes === 1 ? 'demo-wall' : 'left-car';
+          assert.equal(debug.overlapsDemoTarget(target), false, `${speed}x / ${frameMs}ms / ${target}`);
+          assert.equal(state.impact.remaining, 1.7);
+          if (checkedCrashes === 2) {
+            assert.ok(state.impact.x >= 566 && state.impact.x <= 628);
+            assert.ok(state.impact.y >= 78 && state.impact.y <= 244);
+          }
+        }
+        if (state.game.finished) break;
+      }
+      assert.equal(checkedCrashes, 2);
+      assert.equal(debug.snapshot().game.finished, true);
+      assert.equal(debug.snapshot().parking.inside, true);
+    }
+  }
+});

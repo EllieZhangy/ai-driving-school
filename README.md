@@ -15,7 +15,7 @@ GitHub's repository file viewer does not run the game. Use the deployed website 
 - Portrait layout, larger touch controls, safe-area padding, and text input that avoids iOS zoom.
 - A bright, original toy-town theme with cream, mint, peach and lavender UI, rounded trees, flower beds, a clubhouse and a school sign.
 - A lightweight 2.5D canvas diorama: angled ground, layered car bodies, glass shading, shadows, and a raised training platform. This is not a WebGL 3D engine.
-- Two scripted comedy crashes with expanding impact rings, cartoon smoke, sparks, a bouncing car, comic captions, and character punchlines; then a successful parking finish.
+- Two scripted comedy crashes: a sudden accelerator/brake mix-up into a visible wall, then reversing into a parked car. Swept contact checks stop the car at the first touching edge. Impact-point bursts, directional sparks, smoke, screen shake and synthesized crash audio accompany the punchlines before a successful parking finish.
 - Base demo timeline is about 44 seconds, plus time needed for narration to finish. Playback options are 0.75x, 1x, and 1.25x.
 - Playback speed controls animation timing only. Chinese narration stays at a natural rate and each punchline finishes before the next chapter.
 - Pause/resume and progress indicators. Leaving the tab pauses the demo.

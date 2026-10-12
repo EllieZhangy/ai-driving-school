@@ -125,6 +125,7 @@
     impact: 0,
     impactX: 0,
     impactY: 0,
+    demoRush: 0,
   };
 
   let speechRecognition = null;
@@ -220,6 +221,7 @@
 
     visual.shake = 0;
     visual.impact = 0;
+    visual.demoRush = 0;
     document.getElementById("comicCaption").classList.remove("visible");
     visual.particles = [];
     visual.confetti = [];
@@ -233,7 +235,7 @@
     updateHud();
     if (!keepModal) closeModal(dom.resultModal);
     if (!silent) {
-      setSisterSpeech("哥/姐，我今天一定能一把过。大概吧。", "neutral", { speakIt: false, logIt: false });
+      setSisterSpeech("教练，我今天一定能一把过。大概吧。", "neutral", { speakIt: false, logIt: false });
     }
   }
 
@@ -1142,9 +1144,9 @@
   // Demo choreography is cinematic; practice continues to use the vehicle physics.
   const demoScenes = [
     { duration: 5, x: 820, y: 470, angle: 90, chapter: "01 / 自信出发", text: "放心，我一把过。你先别问，是哪一把。" },
-    { duration: 7, x: 1030, y: 470, angle: 90, crash: true, chapter: "02 / 保险杠先下班", text: "先往前一点。", punchline: "哎呀！保险杠先下班了。我还没批准呢！" },
+    { duration: 7, x: 1100, y: 470, angle: 90, crash: true, rush: true, target: "demo-wall", chapter: "02 / 油门当刹车", text: "踩刹车？这个踏板吧。", punchline: "砰！踩错了！墙没动，是我把油门当刹车了。" },
     { duration: 5, x: 755, y: 450, angle: 115, chapter: "03 / 战术撤退", text: "倒回来。这叫战术撤退，不叫方向感欠费。" },
-    { duration: 7, x: 597, y: 272, angle: 180, crash: true, chapter: "04 / 和隔壁车贴贴", text: "再倒一点，我有分寸。", punchline: "砰！只是和隔壁贴贴。教练，你怎么不笑了？" },
+    { duration: 7, x: 597, y: 205, angle: 180, crash: true, target: "left-car", chapter: "04 / 距离判断失误", text: "再倒一点，距离够的。", punchline: "砰！我说的够，是修车预算够。" },
     { duration: 6, x: 820, y: 470, angle: 90, chapter: "05 / 认真三秒钟", text: "好了，认真。挂倒挡，向左打死，慢慢倒。" },
     { duration: 7, x: 730, y: 330, angle: 180, chapter: "06 / 回正，继续倒", text: "车身正了，方向盘回正。刚才是喜剧，现在是技术。" },
     { duration: 7, x: 730, y: 163, angle: 180, chapter: "07 / 终于停进去了", text: "进绿色车位，踩刹车。看！两次事故，一次奇迹。" },
@@ -1154,6 +1156,8 @@
   let demoLastUpdate = 0;
   let demoArrived = false;
   let demoPaused = false;
+  const demoWall = { id: "demo-wall", type: "rect", x: 1072, y: 470, width: 20, height: 260, angle: 0 };
+  let impactAudio = null;
 
   function setDemoPaused(paused) {
     demoPaused = paused;
@@ -1169,6 +1173,7 @@
     demoFrom = { x: car.x, y: car.y, angle: car.angle };
     demoSceneElapsed = 0;
     demoArrived = false;
+    visual.demoRush = 0;
     car.gear = game.demoPhase === 1 ? 1 : -1;
     setSisterSpeech(scene.text, "neutral");
     setBadge(`Demo · ${game.demoPhase + 1}/${demoScenes.length}`);
@@ -1184,25 +1189,25 @@
     // Playback controls change the animation timeline, never the narration rate.
     demoSceneElapsed += dt * Number(document.getElementById("demoSpeed").value);
     const t = clamp(demoSceneElapsed / (scene.duration * 0.55), 0, 1);
-    const eased = t * t * (3 - 2 * t);
-    car.x = demoFrom.x + (scene.x - demoFrom.x) * eased;
-    car.y = demoFrom.y + (scene.y - demoFrom.y) * eased;
-    car.angle = demoFrom.angle + (toRad(scene.angle) - demoFrom.angle) * eased;
+    const rushT = clamp((t - 0.35) / 0.65, 0, 1);
+    const eased = scene.rush ? Math.pow(rushT, 3) : t * t * (3 - 2 * t);
+    const candidate = {
+      x: demoFrom.x + (scene.x - demoFrom.x) * eased,
+      y: demoFrom.y + (scene.y - demoFrom.y) * eased,
+      angle: demoFrom.angle + (toRad(scene.angle) - demoFrom.angle) * eased,
+    };
     game.elapsed += dt;
-    if (t === 1 && !demoArrived) {
-      demoArrived = true;
-      if (scene.crash) {
-        game.crashes += 1;
-        visual.shake = 22;
-        visual.impact = 1.7;
-        visual.impactX = car.x;
-        visual.impactY = car.y;
-        for (let i = 0; i < 5; i += 1) createImpactParticles();
-        const caption = document.getElementById("comicCaption");
-        caption.textContent = game.crashes === 1 ? "砰！提前下班" : "轰！礼貌贴贴";
-        caption.classList.add("visible");
-        showToast(game.crashes === 1 ? "💥 保险杠：这班我不上了" : "💥 隔壁车：你礼貌吗？", "danger", 3000);
-        setSisterSpeech(scene.punchline, "panicked");
+    if (!demoArrived) {
+      visual.demoRush = scene.rush ? rushT : 0;
+      const contact = scene.crash ? sweepDemoContact(candidate, scene.target) : null;
+      if (contact) {
+        Object.assign(car, contact.pose);
+        demoArrived = true;
+        visual.demoRush = 0;
+        triggerDemoImpact(contact, scene);
+      } else {
+        Object.assign(car, candidate);
+        if (t === 1) demoArrived = true;
       }
     }
     document.getElementById("demoProgress").value = (game.demoPhase + clamp(demoSceneElapsed / scene.duration, 0, 1)) / demoScenes.length;
@@ -1221,6 +1226,84 @@
       updateHud();
       openModal(document.getElementById("demoEndModal"));
     }
+  }
+
+  // Sweep between frames, then bisect the first contact so fast playback cannot tunnel.
+  function sweepDemoContact(candidate, targetId) {
+    const target = targetId === "demo-wall" ? demoWall : obstacles.find(item => item.id === targetId);
+    const polygon = obstacleCorners(target);
+    const previous = { x: car.x, y: car.y, angle: car.angle };
+    const at = t => ({
+      x: previous.x + (candidate.x - previous.x) * t,
+      y: previous.y + (candidate.y - previous.y) * t,
+      angle: previous.angle + (candidate.angle - previous.angle) * t,
+    });
+    const distance = Math.hypot(candidate.x - previous.x, candidate.y - previous.y);
+    const turnDistance = Math.abs(candidate.angle - previous.angle) * CAR_SPEC.length;
+    const steps = Math.max(1, Math.ceil(Math.max(distance, turnDistance)));
+    for (let i = 1; i <= steps; i += 1) {
+      if (!polygonsIntersect(carCorners(at(i / steps)), polygon)) continue;
+      let low = (i - 1) / steps, high = i / steps;
+      for (let j = 0; j < 14; j += 1) {
+        const mid = (low + high) / 2;
+        if (polygonsIntersect(carCorners(at(mid)), polygon)) high = mid;
+        else low = mid;
+      }
+      const pose = at(low);
+      const height = target.type === "car" ? target.length : target.height;
+      return { pose, point: {
+        x: clamp(pose.x, target.x - target.width / 2, target.x + target.width / 2),
+        y: clamp(pose.y, target.y - height / 2, target.y + height / 2),
+      }};
+    }
+    return null;
+  }
+
+  function triggerDemoImpact(contact, scene) {
+    game.crashes += 1;
+    visual.shake = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? 3 : 16;
+    visual.impact = 1.7;
+    visual.impactX = contact.point.x;
+    visual.impactY = contact.point.y;
+    for (let i = 0; i < 36; i += 1) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 70 + Math.random() * 170;
+      visual.particles.push({ x: contact.point.x, y: contact.point.y,
+        vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 30,
+        life: .5 + Math.random() * .45, maxLife: .95, size: 2 + Math.random() * 4,
+        color: pick(["#ffc86e", "#fff6d4", "#df9a6c", "#e0d6b8"]),
+      });
+    }
+    const caption = document.getElementById("comicCaption");
+    caption.textContent = game.crashes === 1 ? "砰！油门当刹车" : "咚！距离判断失误";
+    caption.classList.add("visible");
+    showToast(game.crashes === 1 ? "墙：刹车在另一边" : "邻车：修车费谁出？", "danger", 3000);
+    playImpactSound();
+    setSisterSpeech(scene.punchline, "panicked");
+  }
+
+  function playImpactSound() {
+    const Audio = window.AudioContext || window.webkitAudioContext;
+    if (game.muted || !Audio) return;
+    try {
+      impactAudio ||= new Audio();
+      void impactAudio.resume().catch(() => {});
+      const now = impactAudio.currentTime;
+      const gain = impactAudio.createGain();
+      gain.gain.setValueAtTime(.22, now);
+      gain.gain.exponentialRampToValueAtTime(.001, now + .28);
+      gain.connect(impactAudio.destination);
+      const oscillator = impactAudio.createOscillator();
+      oscillator.frequency.setValueAtTime(130, now);
+      oscillator.frequency.exponentialRampToValueAtTime(35, now + .25);
+      oscillator.connect(gain); oscillator.start(now); oscillator.stop(now + .28);
+      const buffer = impactAudio.createBuffer(1, Math.ceil(impactAudio.sampleRate * .18), impactAudio.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i += 1) data[i] = (Math.random() * 2 - 1) * .45;
+      const noise = impactAudio.createBufferSource(); noise.buffer = buffer;
+      noise.connect(gain); noise.start(now); noise.stop(now + .18);
+      noise.onended = () => { oscillator.disconnect(); noise.disconnect(); gain.disconnect(); };
+    } catch { /* Subtitles and visual effects remain available when browser audio is blocked. */ }
   }
 
   function startDemo() {
@@ -1266,7 +1349,7 @@
     document.getElementById("modeLabel").textContent = screen === "demo" ? "第一关 · 爆笑 Demo" : "第一关 · 自己尝试";
     resetGame({ silent: true });
     clearLog();
-    setSisterSpeech("哥/姐，我今天一定能一把过。大概吧。", "neutral", { speakIt: false, logIt: false });
+    setSisterSpeech("教练，我今天一定能一把过。大概吧。", "neutral", { speakIt: false, logIt: false });
     if (screen === "demo") startDemo();
     document.querySelector(screen === "home" ? ".home-hero .primary-button" : ".level-nav button").focus();
   }
@@ -1294,6 +1377,8 @@
     drawTargetBay();
     drawObstacles();
     drawCones();
+    if (document.body.dataset.screen === "demo") drawDemoWall();
+    drawSpeedLines();
     drawPlayerCar();
     drawImpact();
     drawParticles();
@@ -1568,6 +1653,30 @@
     ctx.restore();
   }
 
+  function drawDemoWall() {
+    ctx.save();
+    ctx.fillStyle = "#c49477";
+    roundRect(ctx, demoWall.x - 10, demoWall.y - 130, 20, 260, 5); ctx.fill();
+    ctx.fillStyle = "#f2d2ad";
+    roundRect(ctx, demoWall.x - 10, demoWall.y - 144, 20, 260, 5); ctx.fill();
+    ctx.strokeStyle = "#d3ac89"; ctx.lineWidth = 2;
+    for (let y = demoWall.y - 127; y < demoWall.y + 115; y += 22) {
+      ctx.beginPath(); ctx.moveTo(demoWall.x - 10, y); ctx.lineTo(demoWall.x + 10, y); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawSpeedLines() {
+    if (visual.demoRush < .55) return;
+    ctx.save(); ctx.translate(car.x, car.y); ctx.rotate(car.angle);
+    ctx.strokeStyle = "#fff4cc"; ctx.lineWidth = 4;
+    ctx.globalAlpha = visual.demoRush;
+    for (const [x, offset] of [[-31, 0], [0, 14], [31, 7]]) {
+      ctx.beginPath(); ctx.moveTo(x, 58 + offset); ctx.lineTo(x, 108 + offset); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   function drawPlayerCar() {
     ctx.save();
     ctx.translate(car.x + 6, car.y + 9);
@@ -1670,20 +1779,27 @@
   function drawImpact() {
     if (visual.impact <= 0) return;
     const age = 1.7 - visual.impact;
-    ctx.save();
-    ctx.translate(visual.impactX, visual.impactY);
-    ctx.globalAlpha = clamp(visual.impact / 1.1, 0, 1);
-    ctx.strokeStyle = "#ffe29c";
-    ctx.lineWidth = 7;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 25 + age * 75, 18 + age * 45, 0, 0, Math.PI * 2);
-    ctx.stroke();
-    for (let i = 0; i < 7; i += 1) {
-      const a = i / 7 * Math.PI * 2;
-      ctx.fillStyle = i % 2 ? "#ffbc94" : "#fff0dc";
+    ctx.save(); ctx.translate(visual.impactX, visual.impactY);
+    if (age < .24) {
+      ctx.globalAlpha = 1 - age / .24;
+      ctx.fillStyle = "#fff4be"; ctx.strokeStyle = "#eaa260"; ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(Math.cos(a) * age * 48, Math.sin(a) * age * 30 - age * 35, 14 + age * 13, 0, Math.PI * 2);
-      ctx.fill();
+      for (let i = 0; i < 20; i += 1) {
+        const angle = i / 20 * Math.PI * 2;
+        const r = i % 2 ? 12 : 34 + age * 55;
+        const x = Math.cos(angle) * r, y = Math.sin(angle) * r;
+        if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+      }
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+    ctx.globalAlpha = clamp(visual.impact / 1.7, 0, 1);
+    ctx.strokeStyle = "#fff2bc"; ctx.lineWidth = Math.max(1, 5 - age * 3);
+    ctx.beginPath(); ctx.ellipse(0, 0, 12 + age * 65, 8 + age * 35, 0, 0, Math.PI * 2); ctx.stroke();
+    for (let i = 0; i < 6; i += 1) {
+      const a = i / 6 * Math.PI * 2;
+      ctx.globalAlpha = Math.max(0, .5 * (1 - age / 1.7));
+      ctx.fillStyle = i % 2 ? "#e3c7aa" : "#fff5e1";
+      ctx.beginPath(); ctx.arc(Math.cos(a) * age * 30, Math.sin(a) * age * 18 - age * 32, 8 + age * 13, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
   }
@@ -1865,6 +1981,7 @@
       },
       screen: document.body.dataset.screen,
       demo: { active: game.demo, phase: game.demoPhase, paused: demoPaused, sceneElapsed: demoSceneElapsed },
+      impact: { x: visual.impactX, y: visual.impactY, remaining: visual.impact },
       parking: {
         inside: isCarFullyInTarget(),
         aligned: isVerticallyAligned(),
@@ -1915,6 +2032,7 @@
     navigate,
     demoStep: updateDemo,
     pauseDemo: setDemoPaused,
+    overlapsDemoTarget: targetId => polygonsIntersect(carCorners(), obstacleCorners(targetId === "demo-wall" ? demoWall : obstacles.find(item => item.id === targetId))),
   };
 
   init();
