@@ -753,7 +753,7 @@
     document.getElementById("endVoiceButton").disabled = !voice.enabled;
     dom.difficultySelect.disabled = voice.enabled;
     dom.micButton.classList[voice.enabled ? "add" : "remove"]("listening");
-    dom.micButton.querySelector("strong").textContent = label || (voice.enabled ? "监听已开启 · 直接说指令" : "开始监听");
+    dom.micButton.querySelector("strong").textContent = label || (voice.enabled ? "教学中 · 直接说指令" : "开始教学");
   }
 
   function brakeForVoiceDisconnect() {
@@ -775,7 +775,7 @@
     if (wasActive && brake) brakeForVoiceDisconnect();
     try { recognition?.abort(); } catch { /* A completed recognition session may already be closed. */ }
     updateVoiceButton();
-    if (wasActive) setBadge("语音已关闭");
+    if (wasActive) setBadge("教学已暂停");
   }
 
   function startLiveVoice() {
@@ -790,13 +790,13 @@
     voice.rapidEnds = 0;
     voice.lastFingerprint = "";
     window.speechSynthesis?.cancel();
-    document.getElementById("voiceTranscript").textContent = "正在开启持续监听。松手也会继续听；倒车时直接说“停”，不用再点按钮。";
+    document.getElementById("voiceTranscript").textContent = "正在准备语音教学。小满会一直听你指挥；倒车时直接说“停”，不用再点按钮。";
     startLiveRecognition();
   }
 
   function endLiveVoice() {
     stopLiveVoice();
-    document.getElementById("voiceTranscript").textContent = "监听已结束，车辆已刹停。下一局或继续练习时再点“开始监听”。";
+    document.getElementById("voiceTranscript").textContent = "教学已结束，车辆已刹停。想继续指挥，再点“开始教学”就好。";
   }
 
   function startLiveRecognition() {
@@ -813,14 +813,14 @@
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
     voice.pending = true;
-    updateVoiceButton("正在连接实时语音…");
+    updateVoiceButton("教学准备中…");
     recognition.onstart = () => {
       if (!current()) { try { recognition.abort(); } catch {} return; }
       voice.pending = false;
       game.listening = true;
       updateVoiceButton();
-      setBadge("持续监听中", "listening");
-      document.getElementById("voiceTranscript").textContent = "持续监听中：直接说“倒车、左转、回正、停”。说“停”只停车，不结束监听。";
+      setBadge("正在听你指挥", "listening");
+      document.getElementById("voiceTranscript").textContent = "小满在听：直接说“倒车、左转、回正、停”。说“停”只停车，你可以继续指挥。";
     };
     recognition.onresult = event => {
       if (!current()) return;
@@ -875,7 +875,7 @@
       else voice.rapidEnds = 0;
       if (voice.rapidEnds >= 3) {
         stopLiveVoice();
-        document.getElementById("voiceTranscript").textContent = "语音暂时无法持续连接，已刹停。请使用文字指令，或点麦克风重试。";
+        document.getElementById("voiceTranscript").textContent = "语音暂时无法持续连接，已刹停。请使用文字指令，或点“开始教学”重试。";
         return;
       }
       updateVoiceButton("语音重连中 · 已刹停");
@@ -888,7 +888,7 @@
     try { recognition.start(); }
     catch {
       stopLiveVoice();
-      document.getElementById("voiceTranscript").textContent = "语音启动失败，已刹停。请点麦克风重试或使用文字指令。";
+      document.getElementById("voiceTranscript").textContent = "语音启动失败，已刹停。请点“开始教学”重试或使用文字指令。";
     }
   }
 
@@ -1871,7 +1871,7 @@
 
     if (!game.started && !game.demo) {
       ctx.save();
-      ctx.strokeStyle = "rgba(255,216,75,0.45)";
+      ctx.strokeStyle = "rgba(255,255,255,0.8)";
       ctx.lineWidth = 3;
       ctx.setLineDash([9, 8]);
       ctx.beginPath();
@@ -1879,8 +1879,11 @@
       ctx.bezierCurveTo(792, 404, 735, 374, 730, 322);
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = "rgba(255,216,75,0.85)";
-      ctx.font = "700 11px 'Noto Sans SC', sans-serif";
+      ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = "rgba(80,64,42,0.5)";
+      ctx.shadowBlur = 3;
+      ctx.shadowOffsetY = 1;
+      ctx.font = "700 12px 'Noto Sans SC', sans-serif";
       ctx.textAlign = "center";
       ctx.fillText("先倒车＋左打死", 765, 376);
       ctx.restore();

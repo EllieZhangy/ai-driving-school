@@ -6,7 +6,7 @@ Date: 2026-10-12
 
 - JavaScript syntax checks for the game and server.
 - Twenty-five automated behavioral tests using a minimal browser adapter: mobile/desktop setup; exactly two demo collisions and successful final parking; clean practice reset and physics parking success; playback timing independent of narration rate; pause/resume; speech completion gating and replay; live interim commands and steering refinements; duplicate/final transcript handling, correction reversals, and punctuation/filler edits; immediate stop of a physically moving car while the same listener remains active; separate start/end controls; silent student bubbles and coach-only Demo narration; later command recovery; continuous restarts with braking; startup cancellation; recognition errors; lifecycle teardown; caption-only feedback; stale model-response rejection; sudden wall-approach acceleration; first-contact stopping at 0.75x/1x/1.25x with 16/250/1000 ms frame intervals.
-- A 390 x 844 CSS-pixel viewport preview in the Codex in-app browser: portrait home layout, level entry, candy-colored UI, angled parking scene, garden props, playback selector, captions, and progress controls. This is a desktop browser viewport check, not an iPhone hardware test.
+- Desktop and 390 x 844 CSS-pixel previews in the Codex in-app browser: descriptive product header, one home Demo entry, Start/End teaching labels, white parking guidance, portrait home layout, level entry, candy-colored UI, angled parking scene, garden props, playback selector, captions, and progress controls. This is a desktop browser viewport check, not an iPhone hardware test.
 - Public Pages deployment is verified separately through its workflow result and HTTP response.
 
 ## Product film checks
@@ -34,4 +34,4 @@ Date: 2026-10-12
 
 ## Physical device acceptance checklist
 
-Open the public URL, select practice, grant microphone access, click Start listening once, speak a movement command, then say “停” while the microphone remains open, and say “前进” without starting another recording; observe recognition text, subtitles, and immediate vehicle actions, then repeat using text with microphone access denied. Watch both crashes, pause/resume, change playback speed, complete the demo, replay, and enter a fresh practice round. Record the phone model, OS/browser version, network, recognition result, and any platform entry restrictions.
+Open the public URL, select practice, grant microphone access, click Start teaching (开始教学) once, speak a movement command, then say “停” while the microphone remains open, and say “前进” without starting another recording; observe recognition text, subtitles, and immediate vehicle actions, then repeat using text with microphone access denied. Watch both crashes, pause/resume, change playback speed, complete the demo, replay, and enter a fresh practice round. Record the phone model, OS/browser version, network, recognition result, and any platform entry restrictions.

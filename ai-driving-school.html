@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#fff6e7" />
   <meta name="description" content="AI驾校：只能用语音或文字指挥AI学员完成倒车入库。" />
-  <title>AI驾校｜指令停车挑战</title>
+  <title>AI驾校｜用语音辅导 AI 学员停车</title>
   <style>
 /* System fonts keep the mobile build independent of external asset hosts. */
 
@@ -882,8 +882,8 @@ body[data-screen="demo"] .voice-session-panel { display:none; }
         <div class="eyebrow">COMMAND-DRIVEN PARKING GAME</div>
         <div class="brand-line">
           <h1>AI驾校</h1>
-          <span class="title-divider">/</span>
-          <p>指令停车挑战</p>
+          <span class="title-divider" aria-hidden="true">｜</span>
+          <p>用语音辅导 AI 学员停车</p>
         </div>
       </div>
 
@@ -895,8 +895,8 @@ body[data-screen="demo"] .voice-session-panel { display:none; }
     </header>
 
     <section id="homeScreen" class="home-screen">
-      <div class="home-hero"><div class="hero-art" aria-hidden="true"><span class="hero-tree tree-left">♣</span><span class="hero-tree tree-right">♣</span><span class="hero-flower flower-left">✿</span><span class="hero-flower flower-right">✿</span><span class="hero-cloud">☁</span><div class="hero-bay">P</div><div class="hero-car"><span>AI</span></div><span class="hero-boom">哎呀！</span><div class="hero-cone">▲</div></div><div class="hero-copy"><span class="section-kicker">小满的驾校日记 · 第一课</span><h2>你发出指令，<br>AI 负责执行。</h2><p>欢迎来到小满的驾校！今天的任务：车停进去了，你的耐心还在吗？</p><button class="primary-button" data-route="demo">▶ 先看爆笑 Demo</button><span class="hero-caption">约 50 秒 · 看 AI 嘴硬，等你指挥</span></div></div>
-      <div class="level-card"><span class="level-sticker" aria-hidden="true">🌷</span><span class="level-number">01</span><div><span class="section-kicker">新手教练 · 开放练习</span><h3>小满的第一堂停车课</h3><p>把车完整倒进绿色车位，再喊一声“停车”。<br>操作交给 AI，判断交给你。</p></div><div class="level-actions"><button class="secondary-button" data-route="demo">观看 Demo</button><button class="primary-button" data-route="practice">自己尝试 →</button></div></div>
+      <div class="home-hero"><div class="hero-art" aria-hidden="true"><span class="hero-tree tree-left">♣</span><span class="hero-tree tree-right">♣</span><span class="hero-flower flower-left">✿</span><span class="hero-flower flower-right">✿</span><span class="hero-cloud">☁</span><div class="hero-bay">P</div><div class="hero-car"><span>AI</span></div><span class="hero-boom">哎呀！</span><div class="hero-cone">▲</div></div><div class="hero-copy"><span class="section-kicker">小满的驾校日记 · 第一课</span><h2>你发出指令，<br>AI 负责执行。</h2><p>坐在副驾驶，用语音辅导嘴硬、紧张、偶尔迷糊的 AI 学员倒车入库。车停进去了，你的耐心还在吗？</p><button class="primary-button" data-route="demo">▶ 先看爆笑 Demo</button><span class="hero-caption">约 50 秒 · 看 AI 嘴硬，等你指挥</span></div></div>
+      <div class="level-card"><span class="level-sticker" aria-hidden="true">🌷</span><span class="level-number">01</span><div><span class="section-kicker">新手教练 · 开放练习</span><h3>小满的第一堂停车课</h3><p>把车完整倒进绿色车位，再喊一声“停车”。<br>操作交给 AI，判断交给你。</p></div><div class="level-actions"><button class="primary-button" data-route="practice">自己尝试 →</button></div></div>
       <p class="home-note">手机直接玩 · 无需注册 · 娱乐游戏，不用于实际驾驶教学</p>
     </section>
     <div id="levelScreen" hidden>
@@ -966,14 +966,14 @@ body[data-screen="demo"] .voice-session-panel { display:none; }
             <button id="micButton" class="mic-button" type="button" aria-pressed="false" aria-describedby="voiceTranscript">
               <span class="mic-icon" aria-hidden="true">●</span>
               <span class="mic-copy">
-                <strong>开始监听</strong>
-                <small id="micHint">开启后持续监听</small>
+                <strong>开始教学</strong>
+                <small id="micHint">开口指挥，全程听你</small>
               </span>
               <span class="voice-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
             </button>
-            <button id="endVoiceButton" class="end-voice-button" type="button" disabled><span aria-hidden="true">■</span> 结束监听</button>
+            <button id="endVoiceButton" class="end-voice-button" type="button" disabled><span aria-hidden="true">■</span> 结束教学</button>
           </div>
-          <div id="voiceTranscript" class="voice-transcript" role="status" aria-live="polite">开启一次即可连续说“倒车、停、前进”；“停”只停车，不结束监听。</div>
+          <div id="voiceTranscript" class="voice-transcript" role="status" aria-live="polite">点一次“开始教学”，就能连续说“倒车、停、前进”；说“停”只停车，你可以继续指挥。</div>
         </div>
 
         <div id="demoControls" class="demo-controls" hidden><button id="demoPause" class="secondary-button" type="button" aria-pressed="false">Ⅱ 暂停</button><span id="demoChapter">准备出发</span><progress id="demoProgress" max="1" value="0" aria-label="Demo 播放进度"></progress></div>
@@ -1065,7 +1065,7 @@ body[data-screen="demo"] .voice-session-panel { display:none; }
       <span class="section-kicker">HOW TO PLAY</span>
       <h2 id="helpTitle">你不能碰方向盘，只能发指令。</h2>
       <div class="help-steps">
-        <div><b>MIC</b><p><strong>点“开始监听”一次就够</strong><span>松手后继续听。车在倒车时直接说“停”，无需先按按钮；整局结束后再点“结束监听”。</span></p></div>
+        <div><b>MIC</b><p><strong>点“开始教学”一次就够</strong><span>小满会一直听你指挥。车在倒车时直接说“停”，无需再按按钮；想收工时点“结束教学”。</span></p></div>
         <div><b>01</b><p><strong>先说挡位和方向</strong><span>例如“挂倒挡，方向盘向左打死，慢慢倒”。</span></p></div>
         <div><b>02</b><p><strong>观察车身角度</strong><span>车身转到竖直时说“回正，继续倒”。</span></p></div>
         <div><b>03</b><p><strong>停稳才算成功</strong><span>完整进入绿色车位后，记得明确说“停车”。</span></p></div>
@@ -1855,7 +1855,7 @@ body[data-screen="demo"] .voice-session-panel { display:none; }
     document.getElementById("endVoiceButton").disabled = !voice.enabled;
     dom.difficultySelect.disabled = voice.enabled;
     dom.micButton.classList[voice.enabled ? "add" : "remove"]("listening");
-    dom.micButton.querySelector("strong").textContent = label || (voice.enabled ? "监听已开启 · 直接说指令" : "开始监听");
+    dom.micButton.querySelector("strong").textContent = label || (voice.enabled ? "教学中 · 直接说指令" : "开始教学");
   }
 
   function brakeForVoiceDisconnect() {
@@ -1877,7 +1877,7 @@ body[data-screen="demo"] .voice-session-panel { display:none; }
     if (wasActive && brake) brakeForVoiceDisconnect();
     try { recognition?.abort(); } catch { /* A completed recognition session may already be closed. */ }
     updateVoiceButton();
-    if (wasActive) setBadge("语音已关闭");
+    if (wasActive) setBadge("教学已暂停");
   }
 
   function startLiveVoice() {
@@ -1892,13 +1892,13 @@ body[data-screen="demo"] .voice-session-panel { display:none; }
     voice.rapidEnds = 0;
     voice.lastFingerprint = "";
     window.speechSynthesis?.cancel();
-    document.getElementById("voiceTranscript").textContent = "正在开启持续监听。松手也会继续听；倒车时直接说“停”，不用再点按钮。";
+    document.getElementById("voiceTranscript").textContent = "正在准备语音教学。小满会一直听你指挥；倒车时直接说“停”，不用再点按钮。";
     startLiveRecognition();
   }
 
   function endLiveVoice() {
     stopLiveVoice();
-    document.getElementById("voiceTranscript").textContent = "监听已结束，车辆已刹停。下一局或继续练习时再点“开始监听”。";
+    document.getElementById("voiceTranscript").textContent = "教学已结束，车辆已刹停。想继续指挥，再点“开始教学”就好。";
   }
 
   function startLiveRecognition() {
@@ -1915,14 +1915,14 @@ body[data-screen="demo"] .voice-session-panel { display:none; }
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
     voice.pending = true;
-    updateVoiceButton("正在连接实时语音…");
+    updateVoiceButton("教学准备中…");
     recognition.onstart = () => {
       if (!current()) { try { recognition.abort(); } catch {} return; }
       voice.pending = false;
       game.listening = true;
       updateVoiceButton();
-      setBadge("持续监听中", "listening");
-      document.getElementById("voiceTranscript").textContent = "持续监听中：直接说“倒车、左转、回正、停”。说“停”只停车，不结束监听。";
+      setBadge("正在听你指挥", "listening");
+      document.getElementById("voiceTranscript").textContent = "小满在听：直接说“倒车、左转、回正、停”。说“停”只停车，你可以继续指挥。";
     };
     recognition.onresult = event => {
       if (!current()) return;
@@ -1977,7 +1977,7 @@ body[data-screen="demo"] .voice-session-panel { display:none; }
       else voice.rapidEnds = 0;
       if (voice.rapidEnds >= 3) {
         stopLiveVoice();
-        document.getElementById("voiceTranscript").textContent = "语音暂时无法持续连接，已刹停。请使用文字指令，或点麦克风重试。";
+        document.getElementById("voiceTranscript").textContent = "语音暂时无法持续连接，已刹停。请使用文字指令，或点“开始教学”重试。";
         return;
       }
       updateVoiceButton("语音重连中 · 已刹停");
@@ -1990,7 +1990,7 @@ body[data-screen="demo"] .voice-session-panel { display:none; }
     try { recognition.start(); }
     catch {
       stopLiveVoice();
-      document.getElementById("voiceTranscript").textContent = "语音启动失败，已刹停。请点麦克风重试或使用文字指令。";
+      document.getElementById("voiceTranscript").textContent = "语音启动失败，已刹停。请点“开始教学”重试或使用文字指令。";
     }
   }
 
@@ -2973,7 +2973,7 @@ body[data-screen="demo"] .voice-session-panel { display:none; }
 
     if (!game.started && !game.demo) {
       ctx.save();
-      ctx.strokeStyle = "rgba(255,216,75,0.45)";
+      ctx.strokeStyle = "rgba(255,255,255,0.8)";
       ctx.lineWidth = 3;
       ctx.setLineDash([9, 8]);
       ctx.beginPath();
@@ -2981,8 +2981,11 @@ body[data-screen="demo"] .voice-session-panel { display:none; }
       ctx.bezierCurveTo(792, 404, 735, 374, 730, 322);
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = "rgba(255,216,75,0.85)";
-      ctx.font = "700 11px 'Noto Sans SC', sans-serif";
+      ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = "rgba(80,64,42,0.5)";
+      ctx.shadowBlur = 3;
+      ctx.shadowOffsetY = 1;
+      ctx.font = "700 12px 'Noto Sans SC', sans-serif";
       ctx.textAlign = "center";
       ctx.fillText("先倒车＋左打死", 765, 376);
       ctx.restore();
