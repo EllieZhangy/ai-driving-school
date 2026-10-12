@@ -9,6 +9,13 @@ Date: 2026-10-12
 - A 390 x 844 CSS-pixel viewport preview in the Codex in-app browser: portrait home layout, level entry, candy-colored UI, angled parking scene, garden props, playback selector, captions, and progress controls. This is a desktop browser viewport check, not an iPhone hardware test.
 - Public Pages deployment is verified separately through its workflow result and HTTP response.
 
+## Product film checks
+
+- 32.000-second MP4 fully decoded without errors: 1280 x 720, 30 fps, H.264 video, AAC stereo audio at 48 kHz.
+- Reviewed opening, gameplay, crash, success, and closing frames for readable Chinese typography and correct game footage.
+- Original score validated for duration, stereo output, fade boundaries, and zero clipped samples; crash accents aligned at 11.6 and 17.4 seconds.
+- Neutral AI-student copy, robot avatar, and language-only speech voice selection replace the previous gendered framing.
+
 ## Not yet verified on physical devices
 
 - iPhone Safari: microphone permissions, hold/release behavior, Chinese voice availability, audio resume, performance, keyboard, and result modal.

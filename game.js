@@ -290,7 +290,7 @@
     dom.speechBubble.textContent = text;
     setAvatarMood(emotion);
     animateAvatar(emotion === "panicked" ? "crashed" : "reacting");
-    if (logIt) addLog("sister", "小满", text);
+    if (logIt) addLog("student", "小满", text);
     if (speakIt) speak(text);
   }
 
@@ -300,8 +300,8 @@
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "zh-CN";
     utterance.rate = 1.02;
-    utterance.pitch = 1.13;
-    const preferred = availableVoices.find((voice) => /zh-CN/i.test(voice.lang) && /Xiaoxiao|Tingting|Meijia|Female|女/i.test(voice.name))
+    utterance.pitch = 1.0;
+    const preferred = availableVoices.find((voice) => /^zh-CN/i.test(voice.lang))
       || availableVoices.find((voice) => /^zh/i.test(voice.lang));
     if (preferred) utterance.voice = preferred;
     window.speechSynthesis.speak(utterance);
@@ -313,7 +313,7 @@
 
     const entry = document.createElement("div");
     entry.className = `log-entry ${type}`;
-    const avatarText = type === "user" ? "你" : type === "sister" ? "妹" : "AI";
+    const avatarText = type === "user" ? "你" : type === "student" ? "AI" : "AI";
     entry.innerHTML = `
       <div class="log-avatar">${avatarText}</div>
       <div class="log-content">
@@ -1851,8 +1851,8 @@
   }
 
   function copyResultText() {
-    const outcome = game.failed ? "把训练场撞到申请心理援助" : "只靠语音把AI妹妹教会了倒车入库";
-    const text = `我${outcome}：${game.finalScore}分，用时${formatTime(game.elapsed)}，碰撞${game.crashes}次。\n\n这个小游戏里我坐在“副驾驶”，不能碰方向盘，只能说“挂倒挡、左打死、回正、停车”。最离谱的是AI妹妹还会误听和顶嘴。\n\n#AI游戏 #VibeCoding #AI驾校 #倒车入库`;
+    const outcome = game.failed ? "把训练场撞到申请心理援助" : "只靠指令让嘴硬AI完成了倒车入库";
+    const text = `我${outcome}：${game.finalScore}分，用时${formatTime(game.elapsed)}，碰撞${game.crashes}次。\n\n这个小游戏里我坐在“副驾驶”，不能碰方向盘，只能说“挂倒挡、左打死、回正、停车”。最离谱的是AI学员还会误听和顶嘴。\n\n#AI游戏 #VibeCoding #AI驾校 #倒车入库`;
     navigator.clipboard.writeText(text)
       .then(() => {
         dom.copyResultButton.textContent = "已复制";
@@ -1945,7 +1945,7 @@
     const notice = document.getElementById("browserNotice");
     if (/xiaohongshu|rednote/i.test(navigator.userAgent)) {
       notice.hidden = false;
-      notice.textContent = "在小红书里也能用文字和快捷指令玩。若麦克风不可用，请复制链接到 Safari / Chrome 打开。";
+      notice.textContent = "如果麦克风不可用，可用文字或快捷指令；也可复制链接到 Safari / Chrome 打开。";
     } else if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
       notice.hidden = false;
       notice.textContent = "此浏览器暂不支持语音识别，可用文字或下方快捷指令继续玩。";

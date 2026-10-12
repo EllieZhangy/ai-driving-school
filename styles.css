@@ -260,7 +260,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   overflow: hidden;
   min-height: 0;
 }
-.sister-panel {
+.student-panel {
   display: grid;
   grid-template-columns: 92px 1fr;
   gap: 14px;
@@ -330,7 +330,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 @keyframes avatarReact { 0%,100%{transform:rotate(0)} 35%{transform:rotate(-4deg) scale(1.04)} 70%{transform:rotate(3deg)} }
 @keyframes avatarCrash { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px) rotate(-4deg)} 40%{transform:translateX(6px) rotate(5deg)} 65%{transform:translateX(-3px)} }
 
-.sister-copy { min-width: 0; }
+.student-copy { min-width: 0; }
 .name-line strong { font-size: 14px; }
 .status-badge {
   padding: 4px 8px;
@@ -496,7 +496,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   font-weight: 800;
 }
 .log-entry.user .log-avatar { color: #17180f; background: var(--yellow); }
-.log-entry.sister .log-avatar { background: rgba(170,131,255,0.18); color: #dacbff; }
+.log-entry.student .log-avatar { background: rgba(170,131,255,0.18); color: #dacbff; }
 .log-entry.system .log-avatar { background: rgba(112,167,255,0.16); color: #bdd4ff; }
 .log-content { min-width: 0; padding-top: 2px; }
 .log-content strong { display: block; margin-bottom: 2px; font-size: 9px; }
@@ -569,7 +569,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 @media (max-width: 1100px) {
   .game-grid { grid-template-columns: 1fr; }
   .coach-card { display: grid; grid-template-columns: 1fr 1fr; }
-  .sister-panel { grid-column: 1 / -1; }
+  .student-panel { grid-column: 1 / -1; }
   .command-guide { border-right: 1px solid var(--line); }
   .log-panel { grid-column: 1 / -1; min-height: 150px; }
   .command-log { max-height: 170px; }
@@ -599,7 +599,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   .legend { max-width: 58%; gap: 7px; }
   .coach-card { display: flex; }
   .command-guide { border-right: 0; }
-  .sister-panel { grid-template-columns: 75px 1fr; padding: 15px; }
+  .student-panel { grid-template-columns: 75px 1fr; padding: 15px; }
   .avatar { transform: scale(0.82); transform-origin: top left; width: 72px; height: 78px; }
   .avatar.reacting { animation: none; }
   .result-grid { grid-template-columns: 1fr; }
@@ -674,7 +674,7 @@ body[data-screen="demo"] .score-strip { display:none; }
   .canvas-wrap { aspect-ratio: 6 / 7; } .objective-pill { font-size:11px; top:8px; left:8px; padding:0 9px; }
   .stage-toast { font-size:12px; max-width:95%; width:max-content; bottom:12px; padding:8px 10px; }
   .legend { font-size:10px; } .stage-foot { align-items:center; padding-top:10px; }
-  .sister-panel { padding:12px; gap:7px; } .speech-bubble { font-size:14px; line-height:1.6; min-height:0; } .name-line strong { font-size:13px; }
+  .student-panel { padding:12px; gap:7px; } .speech-bubble { font-size:14px; line-height:1.6; min-height:0; } .name-line strong { font-size:13px; }
   .command-guide { padding:12px; } .chips button { font-size:12px; min-height:44px; }
   .input-panel { padding:12px; } .mic-button { min-height:62px; } .mic-copy strong { font-size:14px; } .mic-copy small { font-size:11px; }
   .text-command-row input { font-size:16px; height:44px; } .text-command-row button { font-size:14px; min-width:60px; }
@@ -725,7 +725,7 @@ body { background: radial-gradient(ellipse at 12% 5%,#ffe5c480,transparent 60%),
 .stage-toast.danger { color:#ac554f; border-color:#e6a39c; background:#fff0e7f5; } .stage-toast.success { color:#427657; border-color:#98c5a6; background:#effbecf5; }
 .legend-obstacle { background:#bfa1d0; } .demo-button { background:#d8efdb; color:#4c7658; border:1px solid #aad1ad; box-shadow:0 3px 0 #a4c7a6; }
 .demo-button.active { background:#f4b5a4; color:#784c41; border-color:#df9684; box-shadow:0 3px 0 #d7907c; }
-.sister-panel { background:radial-gradient(circle at 15% 20%,#ffe6ec,transparent 70%),#fff4e7; }
+.student-panel { background:radial-gradient(circle at 15% 20%,#ffe6ec,transparent 70%),#fff4e7; }
 .speech-bubble { background:#ffffffbd; color:#675446; border-color:#ecd1bb; box-shadow:0 3px 0 #f2dcc9; }
 .status-badge { background:#fffdf7; color:#86715c; border-color:#e4cdb7; }
 .status-badge.thinking { color:#84629a; border-color:#cbb5db; background:#f1eaf8; }
@@ -738,7 +738,7 @@ body { background: radial-gradient(ellipse at 12% 5%,#ffe5c480,transparent 60%),
 .text-command-row button { color:#725220; background:#ffdc91; }
 .toggle-ui { background:#ddd7c8; } .toggle-ui::after { background:#fffdf8; }
 .log-empty,.log-meta { color:#9a8a74; } .log-content p { color:#77634f; } .log-content strong { color:#7b725d; }
-.log-entry.user .log-avatar { color:#8b6128; background:#ffebbd; } .log-entry.sister .log-avatar { color:#99657c; background:#fbe2e9; } .log-entry.system .log-avatar { color:#538791; background:#dceef0; }
+.log-entry.user .log-avatar { color:#8b6128; background:#ffebbd; } .log-entry.student .log-avatar { color:#99657c; background:#fbe2e9; } .log-entry.system .log-avatar { color:#538791; background:#dceef0; }
 .command-log { scrollbar-color:#d8cbb6 transparent; }
 .modal-backdrop { background:#8c7f6366; } .modal-card { background:#fffaf0; border:2px solid #e5cba7; box-shadow:0 12px 0 #b7976b30,0 24px 60px #826b4d30; }
 .help-steps>div { background:#faf3e6; } .tip-box { background:#f5eafa; color:#7f638e; } .tip-box span { color:#806e89; }
@@ -751,3 +751,14 @@ body { background: radial-gradient(ellipse at 12% 5%,#ffe5c480,transparent 60%),
 button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#609570; }
 @media(min-width:1000px) { .hero-art { right:9%; } }
 @media(max-width:760px) { .home-hero { padding-top:250px; } .hero-art { top:27px; right:calc(50% - 155px); } .level-sticker { font-size:26px; } .level-card h3 { font-size:19px; } .comic-caption { font-size:30px; } }
+
+/* The student is a fictional, gender-neutral robot with expressive display eyes. */
+.avatar .hair,.avatar .hair-pin,.avatar .blush,.avatar .brow { display:none; }
+.avatar .face { left:10px; top:23px; width:68px; height:57px; border-radius:18px; background:linear-gradient(135deg,#e3efd9,#a1cabb); border:2px solid #83afa0; box-shadow:0 5px 0 #78a99c; }
+.avatar .face::before { content:''; position:absolute; left:7px; right:7px; top:11px; height:24px; border-radius:10px; background:#eaf8f5; }
+.avatar::before { content:''; position:absolute; top:6px; left:41px; height:19px; width:5px; border-radius:5px; background:#83afa0; }
+.avatar::after { content:''; position:absolute; top:2px; left:36px; width:15px; height:15px; border-radius:50%; background:#f7cf77; border:2px solid #cda556; }
+.avatar .eye { top:17px; background:#4e8276; width:8px; height:12px; border-radius:5px; }
+.avatar .mouth { top:39px; left:26px; width:13px; border-color:#4e8276; }
+.avatar.panicked .mouth { top:36px; left:26px; border-color:#4e8276; height:12px; }
+.avatar.annoyed .mouth { top:43px; border-color:#4e8276; }

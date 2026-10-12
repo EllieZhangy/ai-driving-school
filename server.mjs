@@ -19,6 +19,9 @@ const MIME_TYPES = {
   ".mjs": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
   ".png": "image/png",
+  ".gif": "image/gif",
+  ".mp4": "video/mp4",
+  ".srt": "text/plain; charset=utf-8",
   ".svg": "image/svg+xml",
   ".ico": "image/x-icon",
   ".md": "text/markdown; charset=utf-8",
@@ -96,7 +99,7 @@ async function handleInterpret(request, response) {
 async function callCompatibleLLM(text, state) {
   const baseUrl = process.env.LLM_BASE_URL.replace(/\/$/, "");
   const endpoint = `${baseUrl}/chat/completions`;
-  const systemPrompt = `你是浏览器小游戏《AI驾校》的驾驶口令解析器。玩家只能用中文自然语言指挥一个虚构角色完成低速倒车入库。\n\n请只返回一个 JSON 对象，不要使用 Markdown。字段必须是：\n{\n  "understood": boolean,\n  "gear": "R" | "D" | "P" | null,\n  "steering": "left_full" | "left_slight" | "center" | "right_slight" | "right_full" | null,\n  "speed": "slow" | "normal" | "fast" | null,\n  "stop": boolean,\n  "move": boolean,\n  "summary": string[],\n  "reply": string\n}\n\n规则：\n1. “停车、刹车、别动”等必须 stop=true，不得误解。\n2. 支持组合指令，例如“挂倒挡，左打死，慢慢倒”。\n3. 没有明确动作时 understood=false，其他动作字段为 null/false。\n4. reply 是 AI 妹妹的一句简短、略带吐槽但不冒犯的中文回应，最多 35 字。\n5. 这是游戏控制，不要输出真实道路驾驶建议。`;
+  const systemPrompt = `你是浏览器小游戏《AI驾校》的驾驶口令解析器。玩家只能用中文自然语言指挥一个虚构角色完成低速倒车入库。\n\n请只返回一个 JSON 对象，不要使用 Markdown。字段必须是：\n{\n  "understood": boolean,\n  "gear": "R" | "D" | "P" | null,\n  "steering": "left_full" | "left_slight" | "center" | "right_slight" | "right_full" | null,\n  "speed": "slow" | "normal" | "fast" | null,\n  "stop": boolean,\n  "move": boolean,\n  "summary": string[],\n  "reply": string\n}\n\n规则：\n1. “停车、刹车、别动”等必须 stop=true，不得误解。\n2. 支持组合指令，例如“挂倒挡，左打死，慢慢倒”。\n3. 没有明确动作时 understood=false，其他动作字段为 null/false。\n4. reply 是 AI 学员的一句简短、略带吐槽但不冒犯的中文回应，最多 35 字。笑点来自 AI 的过度自信和沟通误差，不涉及性别或群体刻板印象。\n5. 这是游戏控制，不要输出真实道路驾驶建议。`;
 
   const llmResponse = await fetch(endpoint, {
     method: "POST",

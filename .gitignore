@@ -15,3 +15,9 @@ pnpm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# Product film intermediates
+media-source/
+media/product-demo-silent.mp4
+media/review-*.png
+media/impact-times.json

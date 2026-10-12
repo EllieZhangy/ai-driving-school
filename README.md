@@ -1,6 +1,16 @@
 # AI Driving School
 
-A mobile-first Chinese parking game. Coach a stubborn AI character from the passenger seat using voice or text. This is an entertainment prototype, not real driving instruction.
+A mobile-first Chinese parking game. Direct a stubborn, gender-neutral AI student from the passenger seat using voice or text. This is an entertainment prototype, not real driving instruction.
+
+## Product overview
+
+[![Watch the 32-second product overview](media/product-demo-preview.gif)](https://elliezhangy.github.io/ai-driving-school/product-demo.html)
+
+**[Watch with music](https://elliezhangy.github.io/ai-driving-school/product-demo.html)** · [Download MP4](https://elliezhangy.github.io/ai-driving-school/media/product-demo.mp4)
+
+A 32-second landscape product film introduces the concept, command-based interaction, character feedback, two comedy crashes, successful parking, and the play link. It includes Chinese captions, an original instrumental score, and synchronized crash accents. The footage is rendered from the existing scripted game demo; it is not a live microphone session or a cloud-model demonstration. The README preview is silent; click it for the full soundtrack.
+
+Xiaoman is a fictional, gender-neutral AI student. The humor comes from overconfidence and command misunderstandings, not gender stereotypes.
 
 ## Play on your phone
 

@@ -4,8 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#fff6e7" />
-  <meta name="description" content="AI驾校：只能用语音或文字教AI妹妹完成倒车入库。" />
-  <title>AI驾校｜教妹妹倒车入库</title>
+  <meta name="description" content="AI驾校：只能用语音或文字指挥AI学员完成倒车入库。" />
+  <title>AI驾校｜指令停车挑战</title>
   <style>/* System fonts keep the mobile build independent of external asset hosts. */
 
 :root {
@@ -268,7 +268,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   overflow: hidden;
   min-height: 0;
 }
-.sister-panel {
+.student-panel {
   display: grid;
   grid-template-columns: 92px 1fr;
   gap: 14px;
@@ -338,7 +338,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 @keyframes avatarReact { 0%,100%{transform:rotate(0)} 35%{transform:rotate(-4deg) scale(1.04)} 70%{transform:rotate(3deg)} }
 @keyframes avatarCrash { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px) rotate(-4deg)} 40%{transform:translateX(6px) rotate(5deg)} 65%{transform:translateX(-3px)} }
 
-.sister-copy { min-width: 0; }
+.student-copy { min-width: 0; }
 .name-line strong { font-size: 14px; }
 .status-badge {
   padding: 4px 8px;
@@ -504,7 +504,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   font-weight: 800;
 }
 .log-entry.user .log-avatar { color: #17180f; background: var(--yellow); }
-.log-entry.sister .log-avatar { background: rgba(170,131,255,0.18); color: #dacbff; }
+.log-entry.student .log-avatar { background: rgba(170,131,255,0.18); color: #dacbff; }
 .log-entry.system .log-avatar { background: rgba(112,167,255,0.16); color: #bdd4ff; }
 .log-content { min-width: 0; padding-top: 2px; }
 .log-content strong { display: block; margin-bottom: 2px; font-size: 9px; }
@@ -577,7 +577,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 @media (max-width: 1100px) {
   .game-grid { grid-template-columns: 1fr; }
   .coach-card { display: grid; grid-template-columns: 1fr 1fr; }
-  .sister-panel { grid-column: 1 / -1; }
+  .student-panel { grid-column: 1 / -1; }
   .command-guide { border-right: 1px solid var(--line); }
   .log-panel { grid-column: 1 / -1; min-height: 150px; }
   .command-log { max-height: 170px; }
@@ -607,7 +607,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   .legend { max-width: 58%; gap: 7px; }
   .coach-card { display: flex; }
   .command-guide { border-right: 0; }
-  .sister-panel { grid-template-columns: 75px 1fr; padding: 15px; }
+  .student-panel { grid-template-columns: 75px 1fr; padding: 15px; }
   .avatar { transform: scale(0.82); transform-origin: top left; width: 72px; height: 78px; }
   .avatar.reacting { animation: none; }
   .result-grid { grid-template-columns: 1fr; }
@@ -682,7 +682,7 @@ body[data-screen="demo"] .score-strip { display:none; }
   .canvas-wrap { aspect-ratio: 6 / 7; } .objective-pill { font-size:11px; top:8px; left:8px; padding:0 9px; }
   .stage-toast { font-size:12px; max-width:95%; width:max-content; bottom:12px; padding:8px 10px; }
   .legend { font-size:10px; } .stage-foot { align-items:center; padding-top:10px; }
-  .sister-panel { padding:12px; gap:7px; } .speech-bubble { font-size:14px; line-height:1.6; min-height:0; } .name-line strong { font-size:13px; }
+  .student-panel { padding:12px; gap:7px; } .speech-bubble { font-size:14px; line-height:1.6; min-height:0; } .name-line strong { font-size:13px; }
   .command-guide { padding:12px; } .chips button { font-size:12px; min-height:44px; }
   .input-panel { padding:12px; } .mic-button { min-height:62px; } .mic-copy strong { font-size:14px; } .mic-copy small { font-size:11px; }
   .text-command-row input { font-size:16px; height:44px; } .text-command-row button { font-size:14px; min-width:60px; }
@@ -733,7 +733,7 @@ body { background: radial-gradient(ellipse at 12% 5%,#ffe5c480,transparent 60%),
 .stage-toast.danger { color:#ac554f; border-color:#e6a39c; background:#fff0e7f5; } .stage-toast.success { color:#427657; border-color:#98c5a6; background:#effbecf5; }
 .legend-obstacle { background:#bfa1d0; } .demo-button { background:#d8efdb; color:#4c7658; border:1px solid #aad1ad; box-shadow:0 3px 0 #a4c7a6; }
 .demo-button.active { background:#f4b5a4; color:#784c41; border-color:#df9684; box-shadow:0 3px 0 #d7907c; }
-.sister-panel { background:radial-gradient(circle at 15% 20%,#ffe6ec,transparent 70%),#fff4e7; }
+.student-panel { background:radial-gradient(circle at 15% 20%,#ffe6ec,transparent 70%),#fff4e7; }
 .speech-bubble { background:#ffffffbd; color:#675446; border-color:#ecd1bb; box-shadow:0 3px 0 #f2dcc9; }
 .status-badge { background:#fffdf7; color:#86715c; border-color:#e4cdb7; }
 .status-badge.thinking { color:#84629a; border-color:#cbb5db; background:#f1eaf8; }
@@ -746,7 +746,7 @@ body { background: radial-gradient(ellipse at 12% 5%,#ffe5c480,transparent 60%),
 .text-command-row button { color:#725220; background:#ffdc91; }
 .toggle-ui { background:#ddd7c8; } .toggle-ui::after { background:#fffdf8; }
 .log-empty,.log-meta { color:#9a8a74; } .log-content p { color:#77634f; } .log-content strong { color:#7b725d; }
-.log-entry.user .log-avatar { color:#8b6128; background:#ffebbd; } .log-entry.sister .log-avatar { color:#99657c; background:#fbe2e9; } .log-entry.system .log-avatar { color:#538791; background:#dceef0; }
+.log-entry.user .log-avatar { color:#8b6128; background:#ffebbd; } .log-entry.student .log-avatar { color:#99657c; background:#fbe2e9; } .log-entry.system .log-avatar { color:#538791; background:#dceef0; }
 .command-log { scrollbar-color:#d8cbb6 transparent; }
 .modal-backdrop { background:#8c7f6366; } .modal-card { background:#fffaf0; border:2px solid #e5cba7; box-shadow:0 12px 0 #b7976b30,0 24px 60px #826b4d30; }
 .help-steps>div { background:#faf3e6; } .tip-box { background:#f5eafa; color:#7f638e; } .tip-box span { color:#806e89; }
@@ -759,6 +759,17 @@ body { background: radial-gradient(ellipse at 12% 5%,#ffe5c480,transparent 60%),
 button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#609570; }
 @media(min-width:1000px) { .hero-art { right:9%; } }
 @media(max-width:760px) { .home-hero { padding-top:250px; } .hero-art { top:27px; right:calc(50% - 155px); } .level-sticker { font-size:26px; } .level-card h3 { font-size:19px; } .comic-caption { font-size:30px; } }
+
+/* The student is a fictional, gender-neutral robot with expressive display eyes. */
+.avatar .hair,.avatar .hair-pin,.avatar .blush,.avatar .brow { display:none; }
+.avatar .face { left:10px; top:23px; width:68px; height:57px; border-radius:18px; background:linear-gradient(135deg,#e3efd9,#a1cabb); border:2px solid #83afa0; box-shadow:0 5px 0 #78a99c; }
+.avatar .face::before { content:''; position:absolute; left:7px; right:7px; top:11px; height:24px; border-radius:10px; background:#eaf8f5; }
+.avatar::before { content:''; position:absolute; top:6px; left:41px; height:19px; width:5px; border-radius:5px; background:#83afa0; }
+.avatar::after { content:''; position:absolute; top:2px; left:36px; width:15px; height:15px; border-radius:50%; background:#f7cf77; border:2px solid #cda556; }
+.avatar .eye { top:17px; background:#4e8276; width:8px; height:12px; border-radius:5px; }
+.avatar .mouth { top:39px; left:26px; width:13px; border-color:#4e8276; }
+.avatar.panicked .mouth { top:36px; left:26px; border-color:#4e8276; height:12px; }
+.avatar.annoyed .mouth { top:43px; border-color:#4e8276; }
 </style>
 </head>
 <body>
@@ -768,11 +779,11 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
   <main class="app-shell">
     <header class="topbar">
       <div class="brand-block">
-        <div class="eyebrow">VOICE-ONLY PARKING GAME</div>
+        <div class="eyebrow">COMMAND-DRIVEN PARKING GAME</div>
         <div class="brand-line">
           <h1>AI驾校</h1>
           <span class="title-divider">/</span>
-          <p>教妹妹倒车入库</p>
+          <p>指令停车挑战</p>
         </div>
       </div>
 
@@ -784,8 +795,8 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
     </header>
 
     <section id="homeScreen" class="home-screen">
-      <div class="home-hero"><div class="hero-art" aria-hidden="true"><span class="hero-tree tree-left">♣</span><span class="hero-tree tree-right">♣</span><span class="hero-flower flower-left">✿</span><span class="hero-flower flower-right">✿</span><span class="hero-cloud">☁</span><div class="hero-bay">P</div><div class="hero-car"><span>AI</span></div><span class="hero-boom">哎呀！</span><div class="hero-cone">▲</div></div><div class="hero-copy"><span class="section-kicker">小满的驾校日记 · 第一课</span><h2>教她倒车，<br>考验你的耐心。</h2><p>欢迎来到小满的驾校！今天的任务：车停进去了，你的耐心还在吗？</p><button class="primary-button" data-route="demo">▶ 先看爆笑 Demo</button><span class="hero-caption">约 50 秒 · 看她嘴硬，你来收场</span></div></div>
-      <div class="level-card"><span class="level-sticker" aria-hidden="true">🌷</span><span class="level-number">01</span><div><span class="section-kicker">新手教练 · 开放练习</span><h3>小满的第一堂停车课</h3><p>把车完整倒进绿色车位，再喊一声“停车”。<br>方向盘归她，耐心归你。</p></div><div class="level-actions"><button class="secondary-button" data-route="demo">观看 Demo</button><button class="primary-button" data-route="practice">自己尝试 →</button></div></div>
+      <div class="home-hero"><div class="hero-art" aria-hidden="true"><span class="hero-tree tree-left">♣</span><span class="hero-tree tree-right">♣</span><span class="hero-flower flower-left">✿</span><span class="hero-flower flower-right">✿</span><span class="hero-cloud">☁</span><div class="hero-bay">P</div><div class="hero-car"><span>AI</span></div><span class="hero-boom">哎呀！</span><div class="hero-cone">▲</div></div><div class="hero-copy"><span class="section-kicker">小满的驾校日记 · 第一课</span><h2>你发出指令，<br>AI 负责执行。</h2><p>欢迎来到小满的驾校！今天的任务：车停进去了，你的耐心还在吗？</p><button class="primary-button" data-route="demo">▶ 先看爆笑 Demo</button><span class="hero-caption">约 50 秒 · 看 AI 嘴硬，等你指挥</span></div></div>
+      <div class="level-card"><span class="level-sticker" aria-hidden="true">🌷</span><span class="level-number">01</span><div><span class="section-kicker">新手教练 · 开放练习</span><h3>小满的第一堂停车课</h3><p>把车完整倒进绿色车位，再喊一声“停车”。<br>操作交给 AI，判断交给你。</p></div><div class="level-actions"><button class="secondary-button" data-route="demo">观看 Demo</button><button class="primary-button" data-route="practice">自己尝试 →</button></div></div>
       <p class="home-note">手机直接玩 · 无需注册 · 娱乐游戏，不用于实际驾驶教学</p>
     </section>
     <div id="levelScreen" hidden>
@@ -809,7 +820,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
         <strong id="gearValue">P</strong>
       </div>
       <div class="score-item score-wide">
-        <span class="score-label">妹妹状态</span>
+        <span class="score-label">学员状态</span>
         <strong id="moodValue">还算冷静</strong>
       </div>
     </section>
@@ -823,7 +834,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
           </div>
           <div class="difficulty-wrap">
             <label for="difficultySelect">误听概率</label>
-            <select id="difficultySelect" aria-label="选择妹妹的误听概率">
+            <select id="difficultySelect" aria-label="选择AI 的误听概率">
               <option value="0">认真 · 0%</option>
               <option value="0.08" selected>迷糊 · 8%</option>
               <option value="0.18">暴走 · 18%</option>
@@ -852,8 +863,8 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
         </div>
       </div>
 
-      <aside class="coach-card" aria-label="AI妹妹与指令区">
-        <div class="sister-panel">
+      <aside class="coach-card" aria-label="AI学员与指令区">
+        <div class="student-panel">
           <div id="avatar" class="avatar" aria-hidden="true">
             <div class="hair hair-back"></div>
             <div class="face">
@@ -868,9 +879,9 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
             <div class="hair hair-front"></div>
             <div class="hair-pin">✦</div>
           </div>
-          <div class="sister-copy">
+          <div class="student-copy">
             <div class="name-line">
-              <strong>AI妹妹 · 小满</strong>
+              <strong>AI 学员 · 小满</strong>
               <span id="listeningBadge" class="status-badge">等你发话</span>
             </div>
             <div id="speechBubble" class="speech-bubble" aria-live="polite">
@@ -939,7 +950,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
     <section class="modal-card help-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
       <button class="modal-close" type="button" data-close-modal="help" aria-label="关闭">×</button>
       <span class="section-kicker">HOW TO PLAY</span>
-      <h2 id="helpTitle">你不能碰方向盘，只能教她。</h2>
+      <h2 id="helpTitle">你不能碰方向盘，只能发指令。</h2>
       <div class="help-steps">
         <div><b>01</b><p><strong>先说挡位和方向</strong><span>例如“挂倒挡，方向盘向左打死，慢慢倒”。</span></p></div>
         <div><b>02</b><p><strong>观察车身角度</strong><span>车身转到竖直时说“回正，继续倒”。</span></p></div>
@@ -1266,7 +1277,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
     dom.speechBubble.textContent = text;
     setAvatarMood(emotion);
     animateAvatar(emotion === "panicked" ? "crashed" : "reacting");
-    if (logIt) addLog("sister", "小满", text);
+    if (logIt) addLog("student", "小满", text);
     if (speakIt) speak(text);
   }
 
@@ -1276,8 +1287,8 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "zh-CN";
     utterance.rate = 1.02;
-    utterance.pitch = 1.13;
-    const preferred = availableVoices.find((voice) => /zh-CN/i.test(voice.lang) && /Xiaoxiao|Tingting|Meijia|Female|女/i.test(voice.name))
+    utterance.pitch = 1.0;
+    const preferred = availableVoices.find((voice) => /^zh-CN/i.test(voice.lang))
       || availableVoices.find((voice) => /^zh/i.test(voice.lang));
     if (preferred) utterance.voice = preferred;
     window.speechSynthesis.speak(utterance);
@@ -1289,7 +1300,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
 
     const entry = document.createElement("div");
     entry.className = `log-entry ${type}`;
-    const avatarText = type === "user" ? "你" : type === "sister" ? "妹" : "AI";
+    const avatarText = type === "user" ? "你" : type === "student" ? "AI" : "AI";
     entry.innerHTML = `
       <div class="log-avatar">${avatarText}</div>
       <div class="log-content">
@@ -2827,8 +2838,8 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
   }
 
   function copyResultText() {
-    const outcome = game.failed ? "把训练场撞到申请心理援助" : "只靠语音把AI妹妹教会了倒车入库";
-    const text = `我${outcome}：${game.finalScore}分，用时${formatTime(game.elapsed)}，碰撞${game.crashes}次。\n\n这个小游戏里我坐在“副驾驶”，不能碰方向盘，只能说“挂倒挡、左打死、回正、停车”。最离谱的是AI妹妹还会误听和顶嘴。\n\n#AI游戏 #VibeCoding #AI驾校 #倒车入库`;
+    const outcome = game.failed ? "把训练场撞到申请心理援助" : "只靠指令让嘴硬AI完成了倒车入库";
+    const text = `我${outcome}：${game.finalScore}分，用时${formatTime(game.elapsed)}，碰撞${game.crashes}次。\n\n这个小游戏里我坐在“副驾驶”，不能碰方向盘，只能说“挂倒挡、左打死、回正、停车”。最离谱的是AI学员还会误听和顶嘴。\n\n#AI游戏 #VibeCoding #AI驾校 #倒车入库`;
     navigator.clipboard.writeText(text)
       .then(() => {
         dom.copyResultButton.textContent = "已复制";
@@ -2921,7 +2932,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline-color:#6
     const notice = document.getElementById("browserNotice");
     if (/xiaohongshu|rednote/i.test(navigator.userAgent)) {
       notice.hidden = false;
-      notice.textContent = "在小红书里也能用文字和快捷指令玩。若麦克风不可用，请复制链接到 Safari / Chrome 打开。";
+      notice.textContent = "如果麦克风不可用，可用文字或快捷指令；也可复制链接到 Safari / Chrome 打开。";
     } else if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
       notice.hidden = false;
       notice.textContent = "此浏览器暂不支持语音识别，可用文字或下方快捷指令继续玩。";
