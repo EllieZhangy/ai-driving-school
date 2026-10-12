@@ -34,16 +34,6 @@ GitHub's repository file viewer does not run the game. Use the deployed website 
 
 Demo movement is scripted cinematic choreography. Practice uses the vehicle simulation. Demo crashes do not carry into practice.
 
-## Xiaohongshu distribution
-
-This repository delivers a browser game, not an approved Xiaohongshu mini program. A web URL and a Xiaohongshu mini-program entry are separate distribution paths.
-
-For a web pilot, use the HTTPS URL in platform-permitted sharing contexts and verify that the intended entry actually opens for users. This does not guarantee that an arbitrary external URL is clickable in a note or allowed by Xiaohongshu's current distribution rules.
-
-Xiaohongshu's official mini-program platform describes subject verification, category selection, filing, development, and release review: https://miniapp.xiaohongshu.com/. Confirm eligibility for this game with the platform before implementing a mini-program wrapper or native port. No mini-program registration, filing, or release is performed by this repository.
-
-The page detects common Xiaohongshu webview identifiers and suggests text commands or opening the URL in Safari/Chrome if microphone recognition is unavailable. This detection is a convenience, not a guarantee of webview compatibility.
-
 ## Deployment
 
 `.github/workflows/pages.yml` verifies the game, packages only the four public browser files, and deploys GitHub Pages on pushes to `main`. Enable GitHub Pages with GitHub Actions as its source in repository settings. No dependencies or external font downloads are required.
