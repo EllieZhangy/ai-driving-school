@@ -1,0 +1,13 @@
+{
+  "name": "ai-driving-school",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Voice-command parking game prototype",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

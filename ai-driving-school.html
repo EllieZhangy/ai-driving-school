@@ -1,0 +1,2509 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#12131a" />
+  <meta name="description" content="AI驾校：只能用语音或文字教AI妹妹完成倒车入库。" />
+  <title>AI驾校｜教妹妹倒车入库</title>
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg: #101117;
+  --panel: rgba(27, 29, 39, 0.9);
+  --panel-strong: #1d1f2a;
+  --panel-soft: #242633;
+  --line: rgba(255, 255, 255, 0.09);
+  --text: #f7f7fb;
+  --muted: #a6a8b4;
+  --yellow: #ffd84b;
+  --yellow-2: #ffb82e;
+  --green: #58e39a;
+  --red: #ff6b73;
+  --blue: #70a7ff;
+  --purple: #aa83ff;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+}
+
+* { box-sizing: border-box; }
+
+html { color-scheme: dark; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 12% 2%, rgba(255, 216, 75, 0.08), transparent 27rem),
+    radial-gradient(circle at 92% 32%, rgba(112, 167, 255, 0.08), transparent 30rem),
+    var(--bg);
+  color: var(--text);
+  font-family: "Noto Sans SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button, input, select { font: inherit; }
+button { color: inherit; }
+button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 3px solid rgba(255, 216, 75, 0.55);
+  outline-offset: 2px;
+}
+
+.ambient {
+  position: fixed;
+  width: 28rem;
+  height: 28rem;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.09;
+  pointer-events: none;
+  z-index: -1;
+}
+.ambient-a { top: -14rem; left: -7rem; background: var(--yellow); }
+.ambient-b { right: -10rem; bottom: -12rem; background: var(--blue); }
+
+.app-shell {
+  width: min(1540px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 26px 0 38px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.eyebrow, .section-kicker {
+  color: var(--yellow);
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.brand-line {
+  display: flex;
+  align-items: baseline;
+  gap: 11px;
+  margin-top: 4px;
+}
+.brand-line h1 {
+  margin: 0;
+  font-size: clamp(30px, 3.2vw, 48px);
+  line-height: 1;
+  letter-spacing: -0.055em;
+  font-weight: 800;
+}
+.brand-line p {
+  margin: 0;
+  font-size: clamp(17px, 1.5vw, 23px);
+  font-weight: 600;
+  color: #d7d8e0;
+}
+.title-divider { color: #4e5060; font-size: 22px; }
+
+.top-actions { display: flex; align-items: center; gap: 9px; }
+.icon-button, .secondary-button, .primary-button, .demo-button {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+.icon-button:hover, .secondary-button:hover, .primary-button:hover, .demo-button:hover { transform: translateY(-1px); }
+.icon-button {
+  width: 42px;
+  height: 42px;
+  background: rgba(255,255,255,0.045);
+  font-weight: 800;
+}
+.secondary-button {
+  min-height: 42px;
+  padding: 0 16px;
+  background: rgba(255,255,255,0.05);
+  font-weight: 700;
+}
+.primary-button {
+  min-height: 44px;
+  padding: 0 20px;
+  color: #17180f;
+  background: linear-gradient(135deg, var(--yellow), var(--yellow-2));
+  border-color: transparent;
+  font-weight: 800;
+}
+
+.score-strip {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr 1fr 1fr 1.5fr;
+  overflow: hidden;
+  margin-bottom: 14px;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: rgba(27, 29, 39, 0.72);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 14px 44px rgba(0,0,0,0.16);
+}
+.score-item {
+  min-height: 74px;
+  padding: 13px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-right: 1px solid var(--line);
+}
+.score-item:last-child { border-right: 0; }
+.score-item strong {
+  font-family: "DM Sans", "Noto Sans SC", sans-serif;
+  font-size: 24px;
+  line-height: 1.15;
+}
+.score-item small { color: var(--muted); font-size: 12px; }
+.score-label { color: var(--muted); font-size: 11px; margin-bottom: 4px; }
+.score-primary { background: linear-gradient(135deg, rgba(255,216,75,0.18), rgba(255,184,46,0.04)); }
+.score-primary strong { color: var(--yellow); font-size: 31px; }
+
+.game-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(340px, 0.75fr);
+  gap: 14px;
+  align-items: stretch;
+}
+.stage-card, .coach-card {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(15px);
+}
+.stage-card { padding: 18px; min-width: 0; }
+.stage-head, .stage-foot, .guide-head, .log-head, .name-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.stage-head { margin-bottom: 13px; }
+.stage-head h2 { margin: 4px 0 0; font-size: 22px; }
+.difficulty-wrap { display: flex; align-items: center; gap: 8px; }
+.difficulty-wrap label { color: var(--muted); font-size: 12px; }
+.difficulty-wrap select {
+  height: 36px;
+  padding: 0 32px 0 12px;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #242633;
+}
+
+.canvas-wrap {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 11 / 7;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 15px;
+  background: #30333c;
+}
+#gameCanvas { display: block; width: 100%; height: 100%; }
+.objective-pill {
+  position: absolute;
+  top: 13px;
+  left: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(255,255,255,0.13);
+  border-radius: 999px;
+  background: rgba(15,16,21,0.76);
+  backdrop-filter: blur(10px);
+  font-size: 12px;
+  font-weight: 600;
+}
+.objective-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 5px rgba(88,227,154,0.12); }
+.stage-toast {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  max-width: calc(100% - 40px);
+  padding: 10px 15px;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 12px;
+  background: rgba(13,14,19,0.88);
+  opacity: 0;
+  transform: translate(-50%, 12px);
+  transition: 0.22s ease;
+  pointer-events: none;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+.stage-toast.visible { opacity: 1; transform: translate(-50%, 0); }
+.stage-toast.danger { border-color: rgba(255,107,115,0.55); color: #ffd0d3; }
+.stage-toast.success { border-color: rgba(88,227,154,0.55); color: #c9ffe2; }
+
+.stage-foot { padding-top: 13px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; color: var(--muted); font-size: 11px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.legend-target { background: var(--green); }
+.legend-car { background: var(--yellow); }
+.legend-obstacle { background: #89909e; }
+.demo-button {
+  min-height: 36px;
+  padding: 0 13px;
+  color: #101117;
+  background: #f3f4f7;
+  border-color: transparent;
+  font-size: 12px;
+  font-weight: 800;
+}
+.demo-button.active { background: var(--red); color: #fff; }
+
+.coach-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+.sister-panel {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 14px;
+  padding: 20px;
+  border-bottom: 1px solid var(--line);
+  background:
+    radial-gradient(circle at 20% 15%, rgba(170,131,255,0.16), transparent 12rem),
+    linear-gradient(145deg, rgba(255,255,255,0.03), transparent);
+}
+.avatar {
+  position: relative;
+  width: 88px;
+  height: 92px;
+  transform-origin: 50% 80%;
+}
+.avatar.reacting { animation: avatarReact 0.42s ease; }
+.avatar.crashed { animation: avatarCrash 0.45s ease; }
+.face {
+  position: absolute;
+  left: 16px;
+  top: 17px;
+  z-index: 2;
+  width: 59px;
+  height: 65px;
+  border-radius: 47% 47% 45% 45%;
+  background: linear-gradient(155deg, #ffe0c6, #efb895);
+  box-shadow: inset -5px -5px 0 rgba(151,79,61,0.08);
+}
+.hair-back {
+  position: absolute;
+  left: 7px;
+  top: 4px;
+  width: 76px;
+  height: 83px;
+  border-radius: 47% 47% 36% 36%;
+  background: linear-gradient(135deg, #35233f, #17121f);
+}
+.hair-front {
+  position: absolute;
+  left: 17px;
+  top: 10px;
+  z-index: 3;
+  width: 57px;
+  height: 26px;
+  border-radius: 100% 20% 80% 30%;
+  border-top: 13px solid #24172d;
+  transform: rotate(-4deg);
+}
+.hair-pin { position: absolute; top: 16px; right: 7px; z-index: 4; color: var(--yellow); font-size: 18px; transform: rotate(18deg); }
+.eye, .brow, .mouth, .blush { position: absolute; }
+.eye { top: 29px; width: 7px; height: 9px; border-radius: 50%; background: #251c24; }
+.eye-left { left: 14px; }
+.eye-right { right: 14px; }
+.brow { top: 21px; width: 13px; height: 4px; border-top: 2px solid rgba(50,30,37,0.72); border-radius: 50%; }
+.brow-left { left: 10px; transform: rotate(-5deg); }
+.brow-right { right: 10px; transform: rotate(5deg); }
+.mouth { left: 24px; top: 46px; width: 13px; height: 6px; border-bottom: 2px solid #9c4e51; border-radius: 50%; }
+.blush { top: 41px; width: 10px; height: 5px; border-radius: 50%; background: rgba(232,101,112,0.22); filter: blur(1px); }
+.blush-left { left: 6px; }
+.blush-right { right: 6px; }
+.avatar.annoyed .brow-left { transform: rotate(15deg); }
+.avatar.annoyed .brow-right { transform: rotate(-15deg); }
+.avatar.annoyed .mouth { border-bottom: 0; border-top: 2px solid #9c4e51; top: 51px; }
+.avatar.panicked .eye { height: 13px; width: 10px; }
+.avatar.panicked .mouth { width: 14px; height: 12px; border: 2px solid #9c4e51; border-radius: 50%; top: 45px; }
+.avatar.happy .mouth { height: 10px; border-bottom-width: 3px; }
+@keyframes avatarReact { 0%,100%{transform:rotate(0)} 35%{transform:rotate(-4deg) scale(1.04)} 70%{transform:rotate(3deg)} }
+@keyframes avatarCrash { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px) rotate(-4deg)} 40%{transform:translateX(6px) rotate(5deg)} 65%{transform:translateX(-3px)} }
+
+.sister-copy { min-width: 0; }
+.name-line strong { font-size: 14px; }
+.status-badge {
+  padding: 4px 8px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.status-badge.listening { color: #17180f; background: var(--yellow); border-color: transparent; }
+.status-badge.thinking { color: #dacbff; border-color: rgba(170,131,255,0.4); background: rgba(170,131,255,0.1); }
+.speech-bubble {
+  position: relative;
+  min-height: 61px;
+  margin-top: 9px;
+  padding: 11px 13px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px 14px 14px 14px;
+  background: rgba(255,255,255,0.055);
+  color: #ededf2;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.command-guide, .input-panel, .log-panel { padding: 16px 18px; border-bottom: 1px solid var(--line); }
+.guide-head h3, .log-head h3 { margin: 0; font-size: 13px; }
+.guide-head span, .log-head button { color: var(--muted); font-size: 10px; }
+.chips { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 10px; }
+.chips button {
+  min-height: 34px;
+  padding: 6px 9px;
+  color: #cfd0d8;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: rgba(255,255,255,0.035);
+  cursor: pointer;
+  text-align: left;
+  font-size: 10px;
+  transition: 0.16s ease;
+}
+.chips button:hover { color: var(--text); border-color: rgba(255,216,75,0.35); background: rgba(255,216,75,0.06); }
+
+.mic-button {
+  position: relative;
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 13px;
+  overflow: hidden;
+  border: 1px solid rgba(255,216,75,0.3);
+  border-radius: 13px;
+  background: linear-gradient(135deg, rgba(255,216,75,0.13), rgba(255,184,46,0.04));
+  cursor: pointer;
+  text-align: left;
+}
+.mic-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 12% 50%, rgba(255,216,75,0.18), transparent 9rem);
+  opacity: 0;
+  transition: 0.2s ease;
+}
+.mic-button:hover::after, .mic-button.listening::after { opacity: 1; }
+.mic-button.listening { border-color: var(--yellow); box-shadow: 0 0 0 4px rgba(255,216,75,0.08); }
+.mic-icon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  color: #17180f;
+  border-radius: 50%;
+  background: var(--yellow);
+  font-size: 13px;
+}
+.mic-copy { position: relative; z-index: 1; display: flex; flex-direction: column; }
+.mic-copy strong { font-size: 12px; }
+.mic-copy small { margin-top: 2px; color: var(--muted); font-size: 9px; }
+.voice-bars { position: relative; z-index: 1; display: flex; align-items: center; gap: 3px; height: 24px; }
+.voice-bars i { width: 3px; height: 7px; border-radius: 4px; background: var(--yellow); opacity: 0.55; }
+.mic-button.listening .voice-bars i { animation: bar 0.72s ease-in-out infinite alternate; }
+.mic-button.listening .voice-bars i:nth-child(2) { animation-delay: -0.34s; }
+.mic-button.listening .voice-bars i:nth-child(3) { animation-delay: -0.12s; }
+.mic-button.listening .voice-bars i:nth-child(4) { animation-delay: -0.52s; }
+@keyframes bar { to { height: 21px; opacity: 1; } }
+
+.text-command-row { display: grid; grid-template-columns: 1fr auto; gap: 7px; margin-top: 9px; }
+.text-command-row input {
+  min-width: 0;
+  height: 40px;
+  padding: 0 11px;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.045);
+  font-size: 11px;
+}
+.text-command-row input::placeholder { color: #777a89; }
+.text-command-row button {
+  min-width: 58px;
+  border: 0;
+  border-radius: 10px;
+  color: #15160e;
+  background: var(--yellow);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+}
+.ai-mode-row { margin-top: 10px; }
+.toggle-label { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+.toggle-label input { position: absolute; opacity: 0; pointer-events: none; }
+.toggle-ui {
+  position: relative;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  background: #393b48;
+  transition: 0.2s ease;
+}
+.toggle-ui::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #b9bbc5;
+  transition: 0.2s ease;
+}
+.toggle-label input:checked + .toggle-ui { background: var(--purple); }
+.toggle-label input:checked + .toggle-ui::after { transform: translateX(14px); background: white; }
+.toggle-label > span:last-child { display: flex; flex-direction: column; }
+.toggle-label strong { font-size: 10px; }
+.toggle-label small { margin-top: 1px; color: var(--muted); font-size: 8px; line-height: 1.35; }
+
+.log-panel { border-bottom: 0; flex: 1; min-height: 170px; display: flex; flex-direction: column; }
+.log-head button { border: 0; background: transparent; cursor: pointer; }
+.command-log {
+  flex: 1;
+  min-height: 124px;
+  max-height: 238px;
+  margin-top: 10px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #454755 transparent;
+}
+.log-empty { padding: 18px 0; color: #777a88; font-size: 10px; text-align: center; }
+.log-entry { display: grid; grid-template-columns: 26px 1fr; gap: 8px; margin-bottom: 9px; }
+.log-avatar {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+}
+.log-entry.user .log-avatar { color: #17180f; background: var(--yellow); }
+.log-entry.sister .log-avatar { background: rgba(170,131,255,0.18); color: #dacbff; }
+.log-entry.system .log-avatar { background: rgba(112,167,255,0.16); color: #bdd4ff; }
+.log-content { min-width: 0; padding-top: 2px; }
+.log-content strong { display: block; margin-bottom: 2px; font-size: 9px; }
+.log-content p { margin: 0; color: #c6c8d1; font-size: 10px; line-height: 1.42; word-break: break-word; }
+.log-meta { display: block; margin-top: 3px; color: #747786; font-size: 8px; }
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  visibility: hidden;
+  opacity: 0;
+  transition: 0.22s ease;
+}
+.modal.open { visibility: visible; opacity: 1; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(5,6,9,0.76); backdrop-filter: blur(9px); }
+.modal-card {
+  position: relative;
+  z-index: 1;
+  width: min(520px, 100%);
+  padding: 28px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 22px;
+  background: #20222c;
+  box-shadow: 0 30px 100px rgba(0,0,0,0.6);
+  transform: translateY(10px) scale(0.98);
+  transition: 0.22s ease;
+}
+.modal.open .modal-card { transform: translateY(0) scale(1); }
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  cursor: pointer;
+  font-size: 22px;
+}
+.help-card h2 { margin: 7px 40px 20px 0; font-size: 26px; letter-spacing: -0.04em; }
+.help-steps { display: grid; gap: 12px; }
+.help-steps > div { display: grid; grid-template-columns: 42px 1fr; align-items: start; gap: 12px; padding: 13px; border: 1px solid var(--line); border-radius: 13px; background: rgba(255,255,255,0.025); }
+.help-steps b { color: var(--yellow); font-family: "DM Sans"; font-size: 17px; }
+.help-steps p { margin: 0; display: flex; flex-direction: column; }
+.help-steps strong { font-size: 12px; }
+.help-steps span { margin-top: 3px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.tip-box { display: flex; flex-direction: column; margin-top: 13px; padding: 13px; border-left: 3px solid var(--purple); background: rgba(170,131,255,0.07); }
+.tip-box strong { font-size: 11px; }
+.tip-box span { margin-top: 3px; color: #c8c0db; font-size: 10px; line-height: 1.5; }
+.modal-primary { width: 100%; margin-top: 17px; }
+
+.result-card { text-align: center; }
+.result-emoji { font-size: 42px; margin-bottom: 5px; }
+.result-card h2 { margin: 6px 0 2px; font-size: 26px; }
+.result-score { display: flex; justify-content: center; align-items: baseline; gap: 4px; margin: 14px 0; }
+.result-score strong { color: var(--yellow); font-family: "DM Sans"; font-size: 68px; line-height: 0.9; }
+.result-score span { color: var(--muted); font-weight: 700; }
+.result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.result-grid div { padding: 11px 8px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,0.03); }
+.result-grid span { display: block; color: var(--muted); font-size: 9px; }
+.result-grid strong { display: block; margin-top: 4px; font-family: "DM Sans"; font-size: 17px; }
+.result-comment { min-height: 22px; margin: 16px 0; color: #d8d9df; font-size: 11px; }
+.result-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+
+@media (max-width: 1100px) {
+  .game-grid { grid-template-columns: 1fr; }
+  .coach-card { display: grid; grid-template-columns: 1fr 1fr; }
+  .sister-panel { grid-column: 1 / -1; }
+  .command-guide { border-right: 1px solid var(--line); }
+  .log-panel { grid-column: 1 / -1; min-height: 150px; }
+  .command-log { max-height: 170px; }
+}
+
+@media (max-width: 760px) {
+  .app-shell { width: min(100% - 20px, 1540px); padding-top: 16px; }
+  .topbar { align-items: flex-start; }
+  .brand-line { flex-wrap: wrap; gap: 6px 9px; }
+  .brand-line h1 { font-size: 31px; }
+  .brand-line p { font-size: 15px; }
+  .title-divider { display: none; }
+  .top-actions .secondary-button { display: none; }
+  .score-strip { grid-template-columns: repeat(4, 1fr); }
+  .score-item { min-height: 62px; padding: 9px 10px; }
+  .score-item strong { font-size: 18px; }
+  .score-primary strong { font-size: 23px; }
+  .score-wide { grid-column: 1 / -1; border-top: 1px solid var(--line); }
+  .score-item:nth-child(4) { border-right: 0; }
+  .stage-card { padding: 12px; }
+  .stage-head { align-items: flex-start; }
+  .stage-head h2 { font-size: 18px; }
+  .difficulty-wrap { flex-direction: column; align-items: flex-end; gap: 2px; }
+  .difficulty-wrap select { max-width: 128px; font-size: 10px; }
+  .objective-pill { font-size: 9px; max-width: calc(100% - 26px); }
+  .stage-foot { align-items: flex-end; }
+  .legend { max-width: 58%; gap: 7px; }
+  .coach-card { display: flex; }
+  .command-guide { border-right: 0; }
+  .sister-panel { grid-template-columns: 75px 1fr; padding: 15px; }
+  .avatar { transform: scale(0.82); transform-origin: top left; width: 72px; height: 78px; }
+  .avatar.reacting { animation: none; }
+  .result-grid { grid-template-columns: 1fr; }
+  .result-actions { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+}
+  </style>
+</head>
+<body>
+  <div class="ambient ambient-a" aria-hidden="true"></div>
+  <div class="ambient ambient-b" aria-hidden="true"></div>
+
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <div class="eyebrow">VOICE-ONLY PARKING GAME</div>
+        <div class="brand-line">
+          <h1>AI驾校</h1>
+          <span class="title-divider">/</span>
+          <p>教妹妹倒车入库</p>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button id="helpButton" class="icon-button" type="button" aria-label="查看玩法">?</button>
+        <button id="soundButton" class="icon-button" type="button" aria-label="切换声音" aria-pressed="true">🔊</button>
+        <button id="resetButton" class="secondary-button" type="button">重新开练</button>
+      </div>
+    </header>
+
+    <section class="score-strip" aria-label="游戏状态">
+      <div class="score-item score-primary">
+        <span class="score-label">当前得分</span>
+        <strong id="scoreValue">100</strong>
+      </div>
+      <div class="score-item">
+        <span class="score-label">用时</span>
+        <strong id="timeValue">00:00</strong>
+      </div>
+      <div class="score-item">
+        <span class="score-label">碰撞</span>
+        <strong><span id="crashValue">0</span><small> / 4</small></strong>
+      </div>
+      <div class="score-item">
+        <span class="score-label">挡位</span>
+        <strong id="gearValue">P</strong>
+      </div>
+      <div class="score-item score-wide">
+        <span class="score-label">妹妹状态</span>
+        <strong id="moodValue">还算冷静</strong>
+      </div>
+    </section>
+
+    <section class="game-grid">
+      <div class="stage-card">
+        <div class="stage-head">
+          <div>
+            <span class="section-kicker">科目二 · 第一关</span>
+            <h2>右侧倒车入库</h2>
+          </div>
+          <div class="difficulty-wrap">
+            <label for="difficultySelect">误听概率</label>
+            <select id="difficultySelect" aria-label="选择妹妹的误听概率">
+              <option value="0">认真 · 0%</option>
+              <option value="0.08" selected>迷糊 · 8%</option>
+              <option value="0.18">暴走 · 18%</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="canvasWrap" class="canvas-wrap">
+          <canvas id="gameCanvas" width="1100" height="700" aria-label="倒车入库游戏画面"></canvas>
+          <div class="objective-pill">
+            <span class="objective-dot"></span>
+            目标：完整停进绿色车位并刹停
+          </div>
+          <div id="toast" class="stage-toast" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="stage-foot">
+          <div class="legend">
+            <span><i class="legend-target"></i>目标车位</span>
+            <span><i class="legend-car"></i>你的车</span>
+            <span><i class="legend-obstacle"></i>障碍物</span>
+          </div>
+          <button id="demoButton" class="demo-button" type="button">▶ 自动演示一遍</button>
+        </div>
+      </div>
+
+      <aside class="coach-card" aria-label="AI妹妹与指令区">
+        <div class="sister-panel">
+          <div id="avatar" class="avatar" aria-hidden="true">
+            <div class="hair hair-back"></div>
+            <div class="face">
+              <div class="brow brow-left"></div>
+              <div class="brow brow-right"></div>
+              <div class="eye eye-left"></div>
+              <div class="eye eye-right"></div>
+              <div class="mouth"></div>
+              <div class="blush blush-left"></div>
+              <div class="blush blush-right"></div>
+            </div>
+            <div class="hair hair-front"></div>
+            <div class="hair-pin">✦</div>
+          </div>
+          <div class="sister-copy">
+            <div class="name-line">
+              <strong>AI妹妹 · 小满</strong>
+              <span id="listeningBadge" class="status-badge">等你发话</span>
+            </div>
+            <div id="speechBubble" class="speech-bubble" aria-live="polite">
+              哥/姐，我今天一定能一把过。大概吧。
+            </div>
+          </div>
+        </div>
+
+        <div class="command-guide">
+          <div class="guide-head">
+            <h3>你可以这样说</h3>
+            <span>支持组合指令</span>
+          </div>
+          <div class="chips" id="commandChips">
+            <button type="button" data-command="挂倒挡，方向盘向左打死，慢慢倒">倒挡＋左打死＋慢倒</button>
+            <button type="button" data-command="回正，继续倒">回正继续倒</button>
+            <button type="button" data-command="停车，踩刹车">停车</button>
+            <button type="button" data-command="方向盘向右打一点">右打一小圈</button>
+          </div>
+        </div>
+
+        <div class="input-panel">
+          <button id="micButton" class="mic-button" type="button">
+            <span class="mic-icon">●</span>
+            <span class="mic-copy">
+              <strong>按一下开始说话</strong>
+              <small id="micHint">推荐使用 Chrome / Edge</small>
+            </span>
+            <span class="voice-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          </button>
+
+          <div class="text-command-row">
+            <input id="commandInput" type="text" autocomplete="off" maxlength="100" placeholder="也可以打字：挂倒挡，左打死，慢慢倒" aria-label="输入驾驶指令" />
+            <button id="sendButton" type="button">发送</button>
+          </div>
+
+          <div class="ai-mode-row">
+            <label class="toggle-label" for="enhancedToggle">
+              <input id="enhancedToggle" type="checkbox" />
+              <span class="toggle-ui"></span>
+              <span>
+                <strong>大模型增强理解</strong>
+                <small>需运行 server.mjs 并配置 API；失败会自动回退本地解析</small>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="log-panel">
+          <div class="log-head">
+            <h3>对话记录</h3>
+            <button id="clearLogButton" type="button">清空</button>
+          </div>
+          <div id="commandLog" class="command-log" aria-live="polite">
+            <div class="log-empty">第一条指令会出现在这里。</div>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div id="helpModal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal="help"></div>
+    <section class="modal-card help-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <button class="modal-close" type="button" data-close-modal="help" aria-label="关闭">×</button>
+      <span class="section-kicker">HOW TO PLAY</span>
+      <h2 id="helpTitle">你不能碰方向盘，只能教她。</h2>
+      <div class="help-steps">
+        <div><b>01</b><p><strong>先说挡位和方向</strong><span>例如“挂倒挡，方向盘向左打死，慢慢倒”。</span></p></div>
+        <div><b>02</b><p><strong>观察车身角度</strong><span>车身转到竖直时说“回正，继续倒”。</span></p></div>
+        <div><b>03</b><p><strong>停稳才算成功</strong><span>完整进入绿色车位后，记得明确说“停车”。</span></p></div>
+      </div>
+      <div class="tip-box">
+        <strong>导演提示</strong>
+        <span>要录演示素材，可以先点“自动演示一遍”，再切到暴走模式录搞笑版本。</span>
+      </div>
+      <button class="primary-button modal-primary" type="button" data-close-modal="help">我会了，开始吵架</button>
+    </section>
+  </div>
+
+  <div id="resultModal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <section class="modal-card result-card" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+      <div id="resultEmoji" class="result-emoji">🏁</div>
+      <span class="section-kicker">本次科目二成绩</span>
+      <h2 id="resultTitle">居然真的停进去了</h2>
+      <div class="result-score"><strong id="finalScore">88</strong><span>分</span></div>
+      <div class="result-grid">
+        <div><span>总用时</span><strong id="finalTime">00:32</strong></div>
+        <div><span>碰撞次数</span><strong id="finalCrashes">0</strong></div>
+        <div><span>无效指令</span><strong id="finalUnclear">0</strong></div>
+      </div>
+      <p id="resultComment" class="result-comment">小满：我就说我有天赋吧。</p>
+      <div class="result-actions">
+        <button id="copyResultButton" class="secondary-button" type="button">复制战绩文案</button>
+        <button id="playAgainButton" class="primary-button" type="button">再来一把</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+(() => {
+  "use strict";
+
+  const WORLD = { width: 1100, height: 700 };
+  const CAR_SPEC = {
+    length: 92,
+    width: 46,
+    wheelBase: 58,
+    maxSteer: toRad(32),
+    steerRate: toRad(95),
+    acceleration: 38,
+    braking: 120,
+  };
+
+  const TARGET = { x: 675, y: 38, width: 110, height: 250 };
+  const START = { x: 820, y: 470, angle: Math.PI / 2 };
+
+  const dom = {
+    canvas: document.getElementById("gameCanvas"),
+    canvasWrap: document.getElementById("canvasWrap"),
+    scoreValue: document.getElementById("scoreValue"),
+    timeValue: document.getElementById("timeValue"),
+    crashValue: document.getElementById("crashValue"),
+    gearValue: document.getElementById("gearValue"),
+    moodValue: document.getElementById("moodValue"),
+    difficultySelect: document.getElementById("difficultySelect"),
+    speechBubble: document.getElementById("speechBubble"),
+    avatar: document.getElementById("avatar"),
+    listeningBadge: document.getElementById("listeningBadge"),
+    micButton: document.getElementById("micButton"),
+    micHint: document.getElementById("micHint"),
+    commandInput: document.getElementById("commandInput"),
+    sendButton: document.getElementById("sendButton"),
+    commandLog: document.getElementById("commandLog"),
+    clearLogButton: document.getElementById("clearLogButton"),
+    commandChips: document.getElementById("commandChips"),
+    soundButton: document.getElementById("soundButton"),
+    resetButton: document.getElementById("resetButton"),
+    demoButton: document.getElementById("demoButton"),
+    helpButton: document.getElementById("helpButton"),
+    helpModal: document.getElementById("helpModal"),
+    resultModal: document.getElementById("resultModal"),
+    toast: document.getElementById("toast"),
+    enhancedToggle: document.getElementById("enhancedToggle"),
+    finalScore: document.getElementById("finalScore"),
+    finalTime: document.getElementById("finalTime"),
+    finalCrashes: document.getElementById("finalCrashes"),
+    finalUnclear: document.getElementById("finalUnclear"),
+    resultTitle: document.getElementById("resultTitle"),
+    resultEmoji: document.getElementById("resultEmoji"),
+    resultComment: document.getElementById("resultComment"),
+    copyResultButton: document.getElementById("copyResultButton"),
+    playAgainButton: document.getElementById("playAgainButton"),
+  };
+
+  const ctx = dom.canvas.getContext("2d", { alpha: false });
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  const obstacles = [
+    { id: "left-car", type: "car", x: 597, y: 161, width: 62, length: 166, angle: 0, color: "#6f8fb7", label: "左侧车辆" },
+    { id: "right-car", type: "car", x: 863, y: 161, width: 62, length: 166, angle: 0, color: "#9d7e89", label: "右侧车辆" },
+    { id: "island-left", type: "rect", x: 28, y: 24, width: 465, height: 22, angle: 0, color: "#d6d0bf", label: "路沿" },
+    { id: "island-right", type: "rect", x: 951, y: 24, width: 121, height: 22, angle: 0, color: "#d6d0bf", label: "路沿" },
+  ];
+
+  const cones = [
+    { id: "target-left", x: TARGET.x, y: TARGET.y + TARGET.height + 13, radius: 10, label: "左侧标杆" },
+    { id: "target-right", x: TARGET.x + TARGET.width, y: TARGET.y + TARGET.height + 13, radius: 10, label: "右侧标杆" },
+    { id: "lane-left", x: 455, y: 365, radius: 10, label: "训练场路锥" },
+    { id: "lane-right", x: 995, y: 365, radius: 10, label: "训练场路锥" },
+  ];
+
+  const noisePoints = Array.from({ length: 420 }, (_, i) => ({
+    x: pseudoRandom(i * 17 + 3) * WORLD.width,
+    y: pseudoRandom(i * 31 + 11) * WORLD.height,
+    a: 0.018 + pseudoRandom(i * 47 + 5) * 0.025,
+    r: 0.4 + pseudoRandom(i * 59 + 9) * 1.3,
+  }));
+
+  const car = {
+    x: START.x,
+    y: START.y,
+    angle: START.angle,
+    speed: 0,
+    targetSpeed: 0,
+    steer: 0,
+    targetSteer: 0,
+    gear: 0,
+  };
+
+  const game = {
+    roundId: 1,
+    started: false,
+    startTime: 0,
+    elapsed: 0,
+    crashes: 0,
+    unclear: 0,
+    commandCount: 0,
+    finished: false,
+    failed: false,
+    muted: false,
+    listening: false,
+    score: 100,
+    finalScore: null,
+    lastCrashAt: -Infinity,
+    lastFrameAt: performance.now(),
+    showParkingHint: false,
+    parkingHintShown: false,
+    enhancedUnavailableShown: false,
+    demo: false,
+    demoPhase: 0,
+    demoStartedAt: 0,
+    demoCommandLock: false,
+    beforeDemoDifficulty: "0.08",
+  };
+
+  const visual = {
+    shake: 0,
+    toastTimer: null,
+    particles: [],
+    confetti: [],
+    skidMarks: [],
+    trailClock: 0,
+    targetPulse: 0,
+  };
+
+  let speechRecognition = null;
+  let finalTranscript = "";
+  let recognitionHadResult = false;
+  let availableVoices = [];
+
+  function toRad(degrees) {
+    return degrees * Math.PI / 180;
+  }
+
+  function toDeg(radians) {
+    return radians * 180 / Math.PI;
+  }
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function approach(value, target, maxDelta) {
+    if (value < target) return Math.min(value + maxDelta, target);
+    if (value > target) return Math.max(value - maxDelta, target);
+    return target;
+  }
+
+  function normalizeAngle(angle) {
+    let normalized = angle % (Math.PI * 2);
+    if (normalized < 0) normalized += Math.PI * 2;
+    return normalized;
+  }
+
+  function angleDifference(a, b) {
+    const diff = Math.abs(normalizeAngle(a) - normalizeAngle(b));
+    return Math.min(diff, Math.PI * 2 - diff);
+  }
+
+  function pseudoRandom(seed) {
+    const value = Math.sin(seed * 12.9898) * 43758.5453;
+    return value - Math.floor(value);
+  }
+
+  function pick(items) {
+    return items[Math.floor(Math.random() * items.length)];
+  }
+
+  function formatTime(seconds) {
+    const total = Math.max(0, Math.floor(seconds));
+    const minutes = Math.floor(total / 60).toString().padStart(2, "0");
+    const secs = (total % 60).toString().padStart(2, "0");
+    return `${minutes}:${secs}`;
+  }
+
+  function setupCanvas() {
+    dom.canvas.width = Math.round(WORLD.width * dpr);
+    dom.canvas.height = Math.round(WORLD.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+  }
+
+  function resetGame({ keepModal = false, silent = false } = {}) {
+    game.roundId += 1;
+    game.started = false;
+    game.startTime = 0;
+    game.elapsed = 0;
+    game.crashes = 0;
+    game.unclear = 0;
+    game.commandCount = 0;
+    game.finished = false;
+    game.failed = false;
+    game.score = 100;
+    game.finalScore = null;
+    game.lastCrashAt = -Infinity;
+    game.showParkingHint = false;
+    game.parkingHintShown = false;
+    game.demo = false;
+    game.demoPhase = 0;
+    game.demoStartedAt = 0;
+    game.demoCommandLock = false;
+
+    car.x = START.x;
+    car.y = START.y;
+    car.angle = START.angle;
+    car.speed = 0;
+    car.targetSpeed = 0;
+    car.steer = 0;
+    car.targetSteer = 0;
+    car.gear = 0;
+
+    visual.shake = 0;
+    visual.particles = [];
+    visual.confetti = [];
+    visual.skidMarks = [];
+    visual.trailClock = 0;
+
+    dom.demoButton.textContent = "▶ 自动演示一遍";
+    dom.demoButton.classList.remove("active");
+    setBadge("等你发话");
+    setAvatarMood("neutral");
+    updateHud();
+    if (!keepModal) closeModal(dom.resultModal);
+    if (!silent) {
+      setSisterSpeech("哥/姐，我今天一定能一把过。大概吧。", "neutral", { speakIt: false, logIt: false });
+    }
+  }
+
+  function startRoundIfNeeded() {
+    if (!game.started) {
+      game.started = true;
+      game.startTime = performance.now();
+    }
+  }
+
+  function currentScore() {
+    if (game.finalScore !== null) return game.finalScore;
+    const timePenalty = Math.floor(game.elapsed * 0.11);
+    const crashPenalty = game.crashes * 14;
+    const unclearPenalty = game.unclear * 3;
+    return clamp(100 - timePenalty - crashPenalty - unclearPenalty, 0, 100);
+  }
+
+  function updateHud() {
+    game.score = currentScore();
+    dom.scoreValue.textContent = game.score.toString();
+    dom.timeValue.textContent = formatTime(game.elapsed);
+    dom.crashValue.textContent = game.crashes.toString();
+    dom.gearValue.textContent = car.gear === -1 ? "R" : car.gear === 1 ? "D" : "P";
+
+    let mood = "还算冷静";
+    if (game.crashes === 1) mood = "开始嘴硬";
+    if (game.crashes === 2) mood = "有点慌了";
+    if (game.crashes === 3) mood = "灵魂出窍";
+    if (game.crashes >= 4) mood = "准备退学";
+    dom.moodValue.textContent = mood;
+  }
+
+  function setBadge(text, state = "") {
+    dom.listeningBadge.textContent = text;
+    dom.listeningBadge.className = `status-badge${state ? ` ${state}` : ""}`;
+  }
+
+  function setAvatarMood(mood) {
+    dom.avatar.classList.remove("annoyed", "panicked", "happy");
+    if (mood && mood !== "neutral") dom.avatar.classList.add(mood);
+  }
+
+  function animateAvatar(kind = "reacting") {
+    dom.avatar.classList.remove("reacting", "crashed");
+    void dom.avatar.offsetWidth;
+    dom.avatar.classList.add(kind);
+    window.setTimeout(() => dom.avatar.classList.remove(kind), 480);
+  }
+
+  function setSisterSpeech(text, emotion = "neutral", { speakIt = true, logIt = true } = {}) {
+    dom.speechBubble.textContent = text;
+    setAvatarMood(emotion);
+    animateAvatar(emotion === "panicked" ? "crashed" : "reacting");
+    if (logIt) addLog("sister", "小满", text);
+    if (speakIt) speak(text);
+  }
+
+  function speak(text) {
+    if (game.muted || !("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "zh-CN";
+    utterance.rate = 1.08;
+    utterance.pitch = 1.13;
+    const preferred = availableVoices.find((voice) => /zh-CN/i.test(voice.lang) && /Xiaoxiao|Tingting|Meijia|Female|女/i.test(voice.name))
+      || availableVoices.find((voice) => /^zh/i.test(voice.lang));
+    if (preferred) utterance.voice = preferred;
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function addLog(type, speaker, text, meta = "") {
+    const empty = dom.commandLog.querySelector(".log-empty");
+    if (empty) empty.remove();
+
+    const entry = document.createElement("div");
+    entry.className = `log-entry ${type}`;
+    const avatarText = type === "user" ? "你" : type === "sister" ? "妹" : "AI";
+    entry.innerHTML = `
+      <div class="log-avatar">${avatarText}</div>
+      <div class="log-content">
+        <strong>${escapeHtml(speaker)}</strong>
+        <p>${escapeHtml(text)}</p>
+        ${meta ? `<span class="log-meta">${escapeHtml(meta)}</span>` : ""}
+      </div>
+    `;
+    dom.commandLog.appendChild(entry);
+    dom.commandLog.scrollTop = dom.commandLog.scrollHeight;
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function clearLog() {
+    dom.commandLog.innerHTML = '<div class="log-empty">第一条指令会出现在这里。</div>';
+  }
+
+  function showToast(message, tone = "", duration = 1800) {
+    if (visual.toastTimer) window.clearTimeout(visual.toastTimer);
+    dom.toast.textContent = message;
+    dom.toast.className = `stage-toast visible${tone ? ` ${tone}` : ""}`;
+    visual.toastTimer = window.setTimeout(() => {
+      dom.toast.className = "stage-toast";
+    }, duration);
+  }
+
+  function openModal(modal) {
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+  }
+
+  function closeModal(modal) {
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+  }
+
+  function parseLocalCommand(rawText) {
+    const text = rawText
+      .toLowerCase()
+      .replace(/[，。！？、,.!?]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const result = {
+      understood: false,
+      stop: false,
+      gear: null,
+      steering: null,
+      speed: null,
+      move: false,
+      summary: [],
+      source: "local",
+      reply: "",
+      misheard: false,
+      misheardDetail: "",
+    };
+
+    if (!text) return result;
+
+    const stopMatch = /(停下|停车|刹车|别动|不要动|停住|踩刹车|立刻停|马上停|停)/.test(text);
+    const parkMatch = /(挂p挡|挂p档|p挡|p档|驻车)/.test(text);
+    const reverseMatch = /(挂倒挡|挂倒档|倒挡|倒档|倒车|往后倒|向后倒|后退|往后退|退一点|退后)/.test(text);
+    const driveMatch = /(挂d挡|挂d档|d挡|d档|前进|往前开|向前开|往前走|往前一点|开过去|向前一点)/.test(text);
+    const continueMatch = /(继续|接着|别停|保持|就这样|再来一点|再倒一点|再走一点)/.test(text);
+
+    if (stopMatch) {
+      result.stop = true;
+      result.move = false;
+      result.summary.push("停车");
+    }
+
+    if (parkMatch) {
+      result.gear = "P";
+      result.stop = true;
+      result.summary.push("挂P挡");
+    } else if (reverseMatch) {
+      result.gear = "R";
+      result.move = true;
+      result.summary.push("挂倒挡");
+    } else if (driveMatch) {
+      result.gear = "D";
+      result.move = true;
+      result.summary.push("挂前进挡");
+    }
+
+    const steeringEvents = [];
+    collectMatches(text, /(回正|打正|摆正|方向盘正|轮子回正|正回来|回一点)/g, () => ({ steering: "center", summary: "方向回正" }), steeringEvents);
+    collectMatches(text, /(左(?:边)?(?:打|转|拐)?死|向左打死|往左打死|方向盘.{0,5}左.{0,3}死|左满舵|左边到底)/g, () => ({ steering: "left_full", summary: "左打死" }), steeringEvents);
+    collectMatches(text, /(右(?:边)?(?:打|转|拐)?死|向右打死|往右打死|方向盘.{0,5}右.{0,3}死|右满舵|右边到底)/g, () => ({ steering: "right_full", summary: "右打死" }), steeringEvents);
+    collectMatches(text, /(向左一点|往左一点|左打一(?:点|小圈|半圈)|左边一点|微微左|稍微左|左转一点|左一点)/g, () => ({ steering: "left_slight", summary: "向左一点" }), steeringEvents);
+    collectMatches(text, /(向右一点|往右一点|右打一(?:点|小圈|半圈)|右边一点|微微右|稍微右|右转一点|右一点)/g, () => ({ steering: "right_slight", summary: "向右一点" }), steeringEvents);
+
+    if (steeringEvents.length) {
+      steeringEvents.sort((a, b) => a.index - b.index);
+      const latest = steeringEvents[steeringEvents.length - 1];
+      result.steering = latest.steering;
+      result.summary.push(latest.summary);
+    } else if (/(向左|往左|左转|打左)/.test(text)) {
+      result.steering = "left_slight";
+      result.summary.push("向左一点");
+    } else if (/(向右|往右|右转|打右)/.test(text)) {
+      result.steering = "right_slight";
+      result.summary.push("向右一点");
+    }
+
+    if (/(慢慢|慢一点|慢点|缓缓|轻一点|别太快|龟速|稳一点|悠着点)/.test(text)) {
+      result.speed = "slow";
+      result.summary.push("慢速");
+    } else if (/(快一点|快点|加速|踩油门|油门|冲|速度快)/.test(text)) {
+      result.speed = "fast";
+      result.summary.push("加速");
+    } else if (/(正常速度|匀速|保持速度)/.test(text)) {
+      result.speed = "normal";
+      result.summary.push("正常速度");
+    }
+
+    if (continueMatch && !result.stop) {
+      result.move = true;
+      if (!result.summary.includes("继续行驶")) result.summary.push("继续行驶");
+    }
+
+    result.understood = Boolean(result.stop || result.gear || result.steering || result.speed || continueMatch);
+    return result;
+  }
+
+  function collectMatches(text, regex, mapper, target) {
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      target.push({ index: match.index, ...mapper(match) });
+      if (match.index === regex.lastIndex) regex.lastIndex += 1;
+    }
+  }
+
+  async function parseEnhancedCommand(text) {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 2200);
+    try {
+      const response = await fetch("/api/interpret", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text,
+          state: {
+            gear: car.gear === -1 ? "R" : car.gear === 1 ? "D" : "P",
+            steeringDegrees: Math.round(toDeg(car.targetSteer)),
+            moving: Math.abs(car.targetSpeed) > 1,
+          },
+        }),
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      return normalizeEnhancedResult(data);
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }
+
+  function normalizeEnhancedResult(data) {
+    const allowedSteering = new Set(["left_full", "left_slight", "center", "right_slight", "right_full", null]);
+    const allowedSpeed = new Set(["slow", "normal", "fast", null]);
+    const allowedGear = new Set(["R", "D", "P", null]);
+    const result = {
+      understood: Boolean(data?.understood),
+      stop: Boolean(data?.stop),
+      gear: allowedGear.has(data?.gear ?? null) ? (data?.gear ?? null) : null,
+      steering: allowedSteering.has(data?.steering ?? null) ? (data?.steering ?? null) : null,
+      speed: allowedSpeed.has(data?.speed ?? null) ? (data?.speed ?? null) : null,
+      move: Boolean(data?.move),
+      summary: Array.isArray(data?.summary) ? data.summary.slice(0, 5).map(String) : [],
+      source: "llm",
+      reply: typeof data?.reply === "string" ? data.reply.slice(0, 80) : "",
+      misheard: false,
+      misheardDetail: "",
+    };
+    if (result.stop) result.move = false;
+    return result;
+  }
+
+  function applyMishearing(parsed, rawText, { ignoreMishear = false } = {}) {
+    const chance = Number(dom.difficultySelect.value || 0);
+    if (ignoreMishear || chance <= 0 || parsed.stop || Math.random() >= chance) return parsed;
+
+    const changed = { ...parsed, summary: [...parsed.summary], misheard: true };
+    const options = [];
+    if (["left_full", "left_slight", "right_full", "right_slight"].includes(parsed.steering)) options.push("invert_steering");
+    if (parsed.speed) options.push("speed");
+    if (parsed.gear === "R" || parsed.gear === "D") options.push("gear");
+    options.push("ignore");
+
+    const mistake = pick(options);
+    if (mistake === "invert_steering") {
+      const map = {
+        left_full: "right_full",
+        left_slight: "right_slight",
+        right_full: "left_full",
+        right_slight: "left_slight",
+      };
+      const old = parsed.steering;
+      changed.steering = map[old];
+      changed.summary = changed.summary.map((item) => item
+        .replace("左打死", "右打死")
+        .replace("右打死", "左打死")
+        .replace("向左一点", "向右一点")
+        .replace("向右一点", "向左一点"));
+      changed.misheardDetail = /left/.test(old) ? "把“左”听成了“右”" : "把“右”听成了“左”";
+    } else if (mistake === "speed") {
+      changed.speed = parsed.speed === "fast" ? "slow" : "fast";
+      changed.misheardDetail = parsed.speed === "fast" ? "把“快一点”理解成了“慢一点”" : "把“慢一点”理解成了“快一点”";
+    } else if (mistake === "gear") {
+      changed.gear = parsed.gear === "R" ? "D" : "R";
+      changed.move = true;
+      changed.misheardDetail = parsed.gear === "R" ? "误挂成了前进挡" : "误挂成了倒挡";
+    } else {
+      changed.understood = false;
+      changed.stop = false;
+      changed.gear = null;
+      changed.steering = null;
+      changed.speed = null;
+      changed.move = false;
+      changed.summary = [];
+      changed.misheardDetail = `只听见了“${rawText.slice(0, 8)}……”`;
+    }
+    return changed;
+  }
+
+  function instructionReply(parsed) {
+    if (!parsed.understood) {
+      if (parsed.misheard) return pick([
+        "等一下，我刚才只听见一团空气。你再说一次。",
+        "你说太快了，我的CPU刚刚打了个结。",
+        "收到……不对，我什么都没收到。",
+      ]);
+      return pick([
+        "你说的是驾驶指令吗？要不加上“左、右、倒、停”这些关键词？",
+        "我听懂了每一个字，但组合起来完全没懂。",
+        "再具体一点：挡位、方向、速度，至少告诉我一个。",
+      ]);
+    }
+
+    if (parsed.misheard) {
+      if (parsed.steering === "right_full") return "好，右打死！你刚才明明说的是右吧？";
+      if (parsed.steering === "left_full") return "左打死收到。你不要突然说我听反了。";
+      if (parsed.gear === "D") return "前进挡挂好了——等下，你是不是说的倒挡？";
+      if (parsed.gear === "R") return "倒挡！我这次肯定没听错……应该。";
+      return "收到，我按我理解的来。出了事别怪我。";
+    }
+
+    if (parsed.stop || parsed.gear === "P") {
+      return pick([
+        "刹——住了！你早半秒说不行吗？",
+        "停好了。我的心也顺便停了一下。",
+        "踩住刹车了，暂时谁都不用写事故报告。",
+      ]);
+    }
+
+    if (parsed.gear === "R" && parsed.steering === "left_full") {
+      return pick([
+        "倒挡、左打死、慢慢倒。你最好真的会教。",
+        "左打死开始倒！是方向盘打死，不是我打死，对吧？",
+        "行，我往后倒。你盯紧点，我不想和标杆交朋友。",
+      ]);
+    }
+
+    if (parsed.gear === "R" && parsed.steering === "right_full") {
+      return "倒挡加右打死。你确定这不是在教我漂移？";
+    }
+
+    if (parsed.steering === "center") {
+      return pick([
+        "方向回正了。接下来你最好别沉默。",
+        "回正，继续。现在车位看起来像个车位了。",
+        "轮子正了。你看后面，我只负责紧张。",
+      ]);
+    }
+
+    if (parsed.steering === "left_full") return "左打死！方向盘快被我拧下来了。";
+    if (parsed.steering === "right_full") return "右打死！再右就要拧到副驾驶来了。";
+    if (parsed.steering === "left_slight") return "往左一点。这个“一点”到底是多少点？";
+    if (parsed.steering === "right_slight") return "往右一点。你们教练都爱说“一点”吗？";
+    if (parsed.speed === "fast") return "加速？科目二也要赶高铁吗？";
+    if (parsed.speed === "slow") return "好，慢慢来。慢到蚂蚁都能超车。";
+    if (parsed.gear === "R") return "倒挡挂上了。我开始倒，你别走神。";
+    if (parsed.gear === "D") return "前进挡。终于不是一直往后逃了。";
+    if (parsed.move) return "继续走。你不喊停我可真不停。";
+    return "收到。";
+  }
+
+  function instructionMeta(parsed) {
+    const source = parsed.source === "llm" ? "大模型解析" : "本地解析";
+    const summary = parsed.summary.length ? parsed.summary.join(" · ") : "未识别出可执行动作";
+    const misheard = parsed.misheardDetail ? ` · 误听：${parsed.misheardDetail}` : "";
+    return `${source}：${summary}${misheard}`;
+  }
+
+  async function submitCommand(rawText, options = {}) {
+    const text = String(rawText || "").trim();
+    if (!text || game.finished) return;
+
+    if (game.demo && !options.fromDemo) stopDemo(false);
+
+    game.commandCount += 1;
+    addLog("user", options.fromDemo ? "导演指令" : "你", text);
+    setBadge("正在理解", "thinking");
+    dom.commandInput.value = "";
+
+    const commandRound = game.roundId;
+    let parsed;
+    if (dom.enhancedToggle.checked && !options.forceLocal) {
+      try {
+        parsed = await parseEnhancedCommand(text);
+      } catch (error) {
+        parsed = parseLocalCommand(text);
+        if (!game.enhancedUnavailableShown) {
+          game.enhancedUnavailableShown = true;
+          showToast("未连接大模型服务，已自动使用本地理解", "", 2600);
+          addLog("system", "系统", "大模型增强不可用，本条指令已回退到本地解析。", "运行 node server.mjs 并配置环境变量即可启用");
+        }
+      }
+    } else {
+      parsed = parseLocalCommand(text);
+    }
+
+    if (commandRound !== game.roundId || game.finished) return;
+    parsed = applyMishearing(parsed, text, { ignoreMishear: Boolean(options.ignoreMishear) });
+
+    const reply = parsed.reply || instructionReply(parsed);
+    const delay = options.immediate ? 40 : parsed.stop ? 100 : 330 + Math.random() * 370;
+
+    if (!parsed.understood) {
+      game.unclear += 1;
+      setBadge("没听明白");
+      setSisterSpeech(reply, "annoyed");
+      addLog("system", "指令解释", "没有执行车辆动作。", instructionMeta(parsed));
+      showToast("没有识别出动作，可以说：挂倒挡 / 左打死 / 回正 / 停车");
+      return;
+    }
+
+    setSisterSpeech(reply, game.crashes >= 2 ? "panicked" : "neutral");
+    addLog("system", "指令解释", parsed.summary.join(" · ") || "执行上下文动作", instructionMeta(parsed));
+
+    window.setTimeout(() => {
+      if (commandRound !== game.roundId || game.finished) return;
+      applyInstruction(parsed);
+      setBadge(game.listening ? "正在听" : "已执行", game.listening ? "listening" : "");
+    }, delay);
+  }
+
+  function applyInstruction(parsed) {
+    if (parsed.gear === "P") {
+      car.gear = 0;
+      car.targetSpeed = 0;
+      car.targetSteer = 0;
+      return;
+    }
+
+    if (parsed.gear === "R") car.gear = -1;
+    if (parsed.gear === "D") car.gear = 1;
+
+    if (parsed.steering) {
+      const steeringMap = {
+        left_full: -CAR_SPEC.maxSteer,
+        left_slight: -toRad(14),
+        center: 0,
+        right_slight: toRad(14),
+        right_full: CAR_SPEC.maxSteer,
+      };
+      car.targetSteer = steeringMap[parsed.steering];
+    }
+
+    if (parsed.stop) {
+      car.targetSpeed = 0;
+      return;
+    }
+
+    let magnitude = Math.abs(car.targetSpeed);
+    if (parsed.speed === "slow") magnitude = 42;
+    if (parsed.speed === "normal") magnitude = 58;
+    if (parsed.speed === "fast") magnitude = 86;
+    if (!parsed.speed && magnitude < 1) magnitude = 42;
+
+    if (parsed.move || parsed.gear || parsed.speed) {
+      if (car.gear === 0) {
+        car.gear = parsed.gear === "D" ? 1 : -1;
+      }
+      car.targetSpeed = magnitude * car.gear;
+      startRoundIfNeeded();
+    }
+  }
+
+  function initSpeechRecognition() {
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) {
+      dom.micHint.textContent = "当前浏览器不支持，仍可打字玩";
+      return;
+    }
+
+    speechRecognition = new Recognition();
+    speechRecognition.lang = "zh-CN";
+    speechRecognition.interimResults = true;
+    speechRecognition.continuous = false;
+    speechRecognition.maxAlternatives = 1;
+
+    speechRecognition.onstart = () => {
+      game.listening = true;
+      finalTranscript = "";
+      recognitionHadResult = false;
+      dom.micButton.classList.add("listening");
+      dom.micButton.querySelector("strong").textContent = "正在听，你说吧";
+      setBadge("正在听", "listening");
+      dom.speechBubble.textContent = "我听着呢，别一紧张只会喊“啊啊啊”。";
+    };
+
+    speechRecognition.onresult = (event) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) finalTranscript += transcript;
+        else interim += transcript;
+      }
+      recognitionHadResult = Boolean(finalTranscript || interim);
+      dom.commandInput.value = finalTranscript || interim;
+      if (interim) dom.speechBubble.textContent = `你是不是在说：“${interim}”`;
+    };
+
+    speechRecognition.onerror = (event) => {
+      const friendly = {
+        "not-allowed": "麦克风权限被拒绝，请允许访问或改用文字输入。",
+        "no-speech": "没听到声音，再按一次麦克风试试。",
+        network: "语音识别网络连接失败，可以先用文字指令。",
+        aborted: "语音输入已取消。",
+      }[event.error] || `语音识别出错：${event.error}`;
+      showToast(friendly, event.error === "not-allowed" ? "danger" : "", 3000);
+    };
+
+    speechRecognition.onend = () => {
+      game.listening = false;
+      dom.micButton.classList.remove("listening");
+      dom.micButton.querySelector("strong").textContent = "按一下开始说话";
+      setBadge("等你发话");
+      const text = finalTranscript.trim();
+      finalTranscript = "";
+      if (text) submitCommand(text);
+      else if (!recognitionHadResult) dom.speechBubble.textContent = "你刚才是不是只吸了一口气？";
+    };
+  }
+
+  function toggleListening() {
+    if (!speechRecognition) {
+      showToast("当前浏览器不支持语音识别，请使用 Chrome / Edge 或直接输入文字", "", 3000);
+      dom.commandInput.focus();
+      return;
+    }
+    try {
+      if (game.listening) speechRecognition.stop();
+      else speechRecognition.start();
+    } catch (error) {
+      showToast("麦克风正在启动，请稍后再按一次");
+    }
+  }
+
+  function carCorners(atCar = car) {
+    return orientedRectCorners(atCar.x, atCar.y, CAR_SPEC.width, CAR_SPEC.length, atCar.angle);
+  }
+
+  function orientedRectCorners(x, y, width, height, angle) {
+    const halfW = width / 2;
+    const halfH = height / 2;
+    const local = [
+      { x: -halfW, y: -halfH },
+      { x: halfW, y: -halfH },
+      { x: halfW, y: halfH },
+      { x: -halfW, y: halfH },
+    ];
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    return local.map((point) => ({
+      x: x + point.x * cos - point.y * sin,
+      y: y + point.x * sin + point.y * cos,
+    }));
+  }
+
+  function obstacleCorners(obstacle) {
+    const width = obstacle.width;
+    const height = obstacle.type === "car" ? obstacle.length : obstacle.height;
+    return orientedRectCorners(obstacle.x, obstacle.y, width, height, obstacle.angle || 0);
+  }
+
+  function polygonsIntersect(polyA, polyB) {
+    const polygons = [polyA, polyB];
+    for (const polygon of polygons) {
+      for (let i = 0; i < polygon.length; i += 1) {
+        const next = (i + 1) % polygon.length;
+        const edge = {
+          x: polygon[next].x - polygon[i].x,
+          y: polygon[next].y - polygon[i].y,
+        };
+        const axis = { x: -edge.y, y: edge.x };
+        const length = Math.hypot(axis.x, axis.y) || 1;
+        axis.x /= length;
+        axis.y /= length;
+        const [minA, maxA] = projectPolygon(polyA, axis);
+        const [minB, maxB] = projectPolygon(polyB, axis);
+        if (maxA < minB || maxB < minA) return false;
+      }
+    }
+    return true;
+  }
+
+  function projectPolygon(polygon, axis) {
+    let min = Infinity;
+    let max = -Infinity;
+    for (const point of polygon) {
+      const projection = point.x * axis.x + point.y * axis.y;
+      min = Math.min(min, projection);
+      max = Math.max(max, projection);
+    }
+    return [min, max];
+  }
+
+  function pointInPolygon(point, polygon) {
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const xi = polygon[i].x;
+      const yi = polygon[i].y;
+      const xj = polygon[j].x;
+      const yj = polygon[j].y;
+      const intersect = ((yi > point.y) !== (yj > point.y))
+        && (point.x < (xj - xi) * (point.y - yi) / ((yj - yi) || 1e-9) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  function distancePointToSegment(point, a, b) {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const lengthSq = dx * dx + dy * dy;
+    if (!lengthSq) return Math.hypot(point.x - a.x, point.y - a.y);
+    const t = clamp(((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSq, 0, 1);
+    const px = a.x + t * dx;
+    const py = a.y + t * dy;
+    return Math.hypot(point.x - px, point.y - py);
+  }
+
+  function polygonCircleIntersect(polygon, circle) {
+    if (pointInPolygon(circle, polygon)) return true;
+    for (let i = 0; i < polygon.length; i += 1) {
+      const next = (i + 1) % polygon.length;
+      if (distancePointToSegment(circle, polygon[i], polygon[next]) <= circle.radius) return true;
+    }
+    return false;
+  }
+
+  function collisionLabel() {
+    const polygon = carCorners();
+    const margin = 18;
+    if (polygon.some((point) => point.x < margin || point.x > WORLD.width - margin || point.y < margin || point.y > WORLD.height - 35)) {
+      return "训练场边界";
+    }
+    for (const obstacle of obstacles) {
+      if (polygonsIntersect(polygon, obstacleCorners(obstacle))) return obstacle.label;
+    }
+    for (const cone of cones) {
+      if (polygonCircleIntersect(polygon, cone)) return cone.label;
+    }
+    return "";
+  }
+
+  function registerCrash(label) {
+    const now = performance.now();
+    if (now - game.lastCrashAt < 850) return;
+    game.lastCrashAt = now;
+    game.crashes += 1;
+    visual.shake = 13;
+    createImpactParticles();
+    updateHud();
+    showToast(`撞到${label}！扣 14 分`, "danger", 2200);
+    setSisterSpeech(pick([
+      `完了，撞到${label}了！你刚才不是说“稳一点”吗？`,
+      `${label}为什么会突然出现在那里？它是不是移动了？`,
+      `我承认这次有一点点偏。就一点点。`,
+    ]), "panicked");
+
+    if (game.crashes >= 4) {
+      window.setTimeout(() => finishGame(false), 650);
+    }
+  }
+
+  function createImpactParticles() {
+    for (let i = 0; i < 16; i += 1) {
+      visual.particles.push({
+        x: car.x + (Math.random() - 0.5) * 30,
+        y: car.y + (Math.random() - 0.5) * 30,
+        vx: (Math.random() - 0.5) * 145,
+        vy: (Math.random() - 0.5) * 145,
+        life: 0.55 + Math.random() * 0.35,
+        maxLife: 0.9,
+        size: 2 + Math.random() * 4,
+      });
+    }
+  }
+
+  function createConfetti() {
+    const palette = ["#ffd84b", "#58e39a", "#70a7ff", "#ff6b73", "#aa83ff", "#ffffff"];
+    for (let i = 0; i < 100; i += 1) {
+      visual.confetti.push({
+        x: WORLD.width * 0.5 + (Math.random() - 0.5) * 260,
+        y: 50 + Math.random() * 80,
+        vx: (Math.random() - 0.5) * 170,
+        vy: 25 + Math.random() * 145,
+        rotation: Math.random() * Math.PI,
+        vr: (Math.random() - 0.5) * 8,
+        width: 5 + Math.random() * 6,
+        height: 3 + Math.random() * 5,
+        color: pick(palette),
+        life: 2.7 + Math.random() * 1.3,
+      });
+    }
+  }
+
+  function isCarFullyInTarget() {
+    const margin = 7;
+    return carCorners().every((point) => (
+      point.x >= TARGET.x + margin
+      && point.x <= TARGET.x + TARGET.width - margin
+      && point.y >= TARGET.y + margin
+      && point.y <= TARGET.y + TARGET.height - margin
+    ));
+  }
+
+  function isVerticallyAligned() {
+    return Math.min(angleDifference(car.angle, 0), angleDifference(car.angle, Math.PI)) <= toRad(11);
+  }
+
+  function checkParkingSuccess() {
+    if (!game.started || game.finished) return;
+    const inside = isCarFullyInTarget();
+    const aligned = isVerticallyAligned();
+
+    if (inside && aligned && Math.abs(car.speed) > 2 && !game.parkingHintShown) {
+      game.parkingHintShown = true;
+      showToast("位置很好！现在明确说“停车”", "success", 2600);
+      setSisterSpeech("我是不是已经进来了？快喊停，快！", "panicked");
+    }
+
+    if (inside && aligned && Math.abs(car.speed) < 1.25 && Math.abs(car.targetSpeed) < 0.5 && game.elapsed > 3) {
+      finishGame(true);
+    }
+  }
+
+  function finishGame(success) {
+    if (game.finished) return;
+    game.finished = true;
+    game.failed = !success;
+    car.targetSpeed = 0;
+    car.speed = 0;
+    stopDemo(true);
+
+    let score = currentScore();
+    if (success) {
+      const centerX = TARGET.x + TARGET.width / 2;
+      const centerY = TARGET.y + TARGET.height / 2;
+      const offset = Math.hypot(car.x - centerX, car.y - centerY);
+      const alignment = Math.min(angleDifference(car.angle, 0), angleDifference(car.angle, Math.PI));
+      const precisionBonus = clamp(Math.round(8 - offset * 0.11 - toDeg(alignment) * 0.22), 0, 8);
+      score = clamp(score + precisionBonus, 0, 100);
+      createConfetti();
+      setSisterSpeech(score >= 90
+        ? "看见没有？一把过。主要是我天赋好，和你关系也不算太大。"
+        : "居然真的停进去了！我收回刚才对你教学水平的一半质疑。", "happy");
+    } else {
+      score = clamp(score, 0, 59);
+      setSisterSpeech("四次碰撞。教练说今天先练到这里，主要是保护训练场。", "annoyed");
+    }
+    game.finalScore = score;
+    updateHud();
+
+    dom.finalScore.textContent = score.toString();
+    dom.finalTime.textContent = formatTime(game.elapsed);
+    dom.finalCrashes.textContent = game.crashes.toString();
+    dom.finalUnclear.textContent = game.unclear.toString();
+
+    if (success) {
+      dom.resultEmoji.textContent = score >= 90 ? "🏆" : score >= 75 ? "🎉" : "😮‍💨";
+      dom.resultTitle.textContent = score >= 90 ? "这把真能去考试了" : score >= 75 ? "居然真的停进去了" : "至少车完整进来了";
+      dom.resultComment.textContent = score >= 90
+        ? "小满：我宣布，今天这辆车主要听我的。"
+        : game.crashes === 0
+          ? "小满：没撞东西，已经超过我自己的预期。"
+          : "小满：过程不重要，最后四个轮子都在车位里。";
+    } else {
+      dom.resultEmoji.textContent = "🚧";
+      dom.resultTitle.textContent = "训练场申请了心理援助";
+      dom.resultComment.textContent = "小满：不是我不想学，是这些标杆针对我。";
+    }
+
+    window.setTimeout(() => openModal(dom.resultModal), success ? 1000 : 650);
+  }
+
+  function updatePhysics(dt, now) {
+    if (game.finished) return;
+
+    if (game.started) game.elapsed = (now - game.startTime) / 1000;
+
+    let speedRate = CAR_SPEC.acceleration;
+    const changingDirection = Math.sign(car.speed) !== 0 && Math.sign(car.targetSpeed) !== 0 && Math.sign(car.speed) !== Math.sign(car.targetSpeed);
+    if (changingDirection || Math.abs(car.targetSpeed) < Math.abs(car.speed)) speedRate = CAR_SPEC.braking;
+    car.speed = approach(car.speed, car.targetSpeed, speedRate * dt);
+    car.steer = approach(car.steer, car.targetSteer, CAR_SPEC.steerRate * dt);
+
+    if (Math.abs(car.speed) < 0.03) car.speed = 0;
+    if (Math.abs(car.steer) < 0.0005 && car.targetSteer === 0) car.steer = 0;
+
+    const old = { x: car.x, y: car.y, angle: car.angle };
+    if (Math.abs(car.speed) > 0.001) {
+      car.x += Math.sin(car.angle) * car.speed * dt;
+      car.y -= Math.cos(car.angle) * car.speed * dt;
+      car.angle = normalizeAngle(car.angle + (car.speed / CAR_SPEC.wheelBase) * Math.tan(car.steer) * dt);
+
+      visual.trailClock += dt;
+      if (visual.trailClock > 0.09 && Math.abs(car.speed) > 30 && Math.abs(car.steer) > toRad(18)) {
+        visual.trailClock = 0;
+        addSkidMarks();
+      }
+
+      const label = collisionLabel();
+      if (label) {
+        car.x = old.x;
+        car.y = old.y;
+        car.angle = old.angle;
+        car.speed = 0;
+        car.targetSpeed = 0;
+        registerCrash(label);
+      }
+    }
+
+    checkParkingSuccess();
+    updateHud();
+  }
+
+  function addSkidMarks() {
+    const cos = Math.cos(car.angle);
+    const sin = Math.sin(car.angle);
+    const rearY = CAR_SPEC.length / 2 - 13;
+    for (const side of [-1, 1]) {
+      const localX = side * (CAR_SPEC.width / 2 - 7);
+      const localY = rearY;
+      visual.skidMarks.push({
+        x: car.x + localX * cos - localY * sin,
+        y: car.y + localX * sin + localY * cos,
+        angle: car.angle,
+        life: 5.5,
+      });
+    }
+    if (visual.skidMarks.length > 180) visual.skidMarks.splice(0, visual.skidMarks.length - 180);
+  }
+
+  function updateEffects(dt) {
+    visual.targetPulse += dt;
+    visual.shake = Math.max(0, visual.shake - dt * 35);
+
+    for (const particle of visual.particles) {
+      particle.life -= dt;
+      particle.x += particle.vx * dt;
+      particle.y += particle.vy * dt;
+      particle.vx *= Math.pow(0.05, dt);
+      particle.vy *= Math.pow(0.05, dt);
+    }
+    visual.particles = visual.particles.filter((particle) => particle.life > 0);
+
+    for (const piece of visual.confetti) {
+      piece.life -= dt;
+      piece.x += piece.vx * dt;
+      piece.y += piece.vy * dt;
+      piece.vy += 90 * dt;
+      piece.rotation += piece.vr * dt;
+    }
+    visual.confetti = visual.confetti.filter((piece) => piece.life > 0 && piece.y < WORLD.height + 40);
+
+    for (const mark of visual.skidMarks) mark.life -= dt;
+    visual.skidMarks = visual.skidMarks.filter((mark) => mark.life > 0);
+  }
+
+  function updateDemo(now) {
+    if (!game.demo || game.finished || game.demoCommandLock) return;
+    const elapsed = (now - game.demoStartedAt) / 1000;
+
+    if (game.demoPhase === 0 && elapsed > 0.55) {
+      game.demoCommandLock = true;
+      game.demoPhase = 1;
+      submitCommand("挂倒挡，方向盘向左打死，慢慢倒", { fromDemo: true, forceLocal: true, ignoreMishear: true, immediate: true })
+        .finally(() => { game.demoCommandLock = false; });
+      return;
+    }
+
+    if (game.demoPhase === 1 && car.angle >= toRad(176)) {
+      game.demoCommandLock = true;
+      game.demoPhase = 2;
+      submitCommand("回正，继续倒", { fromDemo: true, forceLocal: true, ignoreMishear: true, immediate: true })
+        .finally(() => { game.demoCommandLock = false; });
+      return;
+    }
+
+    if (game.demoPhase === 2 && car.y <= TARGET.y + TARGET.height / 2) {
+      game.demoCommandLock = true;
+      game.demoPhase = 3;
+      submitCommand("停车，踩刹车", { fromDemo: true, forceLocal: true, ignoreMishear: true, immediate: true })
+        .finally(() => { game.demoCommandLock = false; });
+      return;
+    }
+
+    if (elapsed > 16 && !game.finished) {
+      stopDemo(false);
+      showToast("自动演示被意外打断，可以重新开始再试一次", "danger", 2600);
+    }
+  }
+
+  function startDemo() {
+    resetGame({ silent: true });
+    game.beforeDemoDifficulty = dom.difficultySelect.value;
+    dom.difficultySelect.value = "0";
+    game.demo = true;
+    game.demoPhase = 0;
+    game.demoStartedAt = performance.now();
+    dom.demoButton.textContent = "■ 停止演示";
+    dom.demoButton.classList.add("active");
+    clearLog();
+    setSisterSpeech("导演模式？行，我这次尽量按剧本演。", "neutral");
+    showToast("自动演示开始：所有动作仍通过同一套指令系统执行", "", 2600);
+  }
+
+  function stopDemo(restoreDifficulty = true) {
+    if (!game.demo) return;
+    game.demo = false;
+    game.demoPhase = 0;
+    game.demoCommandLock = false;
+    dom.demoButton.textContent = "▶ 自动演示一遍";
+    dom.demoButton.classList.remove("active");
+    if (restoreDifficulty) dom.difficultySelect.value = game.beforeDemoDifficulty;
+  }
+
+  function drawScene() {
+    ctx.save();
+    const shakeX = visual.shake ? (Math.random() - 0.5) * visual.shake : 0;
+    const shakeY = visual.shake ? (Math.random() - 0.5) * visual.shake : 0;
+    ctx.translate(shakeX, shakeY);
+
+    drawGround();
+    drawParkingLayout();
+    drawSkidMarks();
+    drawTargetBay();
+    drawObstacles();
+    drawCones();
+    drawPlayerCar();
+    drawParticles();
+    drawConfetti();
+
+    ctx.restore();
+  }
+
+  function drawGround() {
+    const gradient = ctx.createLinearGradient(0, 0, 0, WORLD.height);
+    gradient.addColorStop(0, "#3b3e47");
+    gradient.addColorStop(1, "#2d3038");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+
+    ctx.fillStyle = "#343741";
+    ctx.fillRect(0, 300, WORLD.width, 350);
+
+    for (const point of noisePoints) {
+      ctx.globalAlpha = point.a;
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, point.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = "#20232a";
+    ctx.fillRect(0, 650, WORLD.width, 50);
+    ctx.fillStyle = "#e9db83";
+    ctx.fillRect(0, 650, WORLD.width, 4);
+  }
+
+  function drawParkingLayout() {
+    ctx.save();
+    ctx.strokeStyle = "rgba(244, 244, 239, 0.72)";
+    ctx.lineWidth = 4;
+    ctx.setLineDash([]);
+
+    const bays = [405, 540, 675, 810, 945];
+    for (const x of bays) {
+      ctx.beginPath();
+      ctx.moveTo(x, 38);
+      ctx.lineTo(x, 288);
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.moveTo(405, 38);
+    ctx.lineTo(1055, 38);
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(255,255,255,0.25)";
+    ctx.lineWidth = 3;
+    ctx.setLineDash([22, 18]);
+    ctx.beginPath();
+    ctx.moveTo(45, 484);
+    ctx.lineTo(1055, 484);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    drawRoadArrow(250, 425, Math.PI / 2);
+    drawRoadArrow(250, 545, -Math.PI / 2);
+    drawRoadArrow(1030, 425, Math.PI / 2);
+    drawRoadArrow(1030, 545, -Math.PI / 2);
+
+    ctx.fillStyle = "rgba(255,255,255,0.36)";
+    ctx.font = "700 14px 'Noto Sans SC', sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("科目二封闭训练场", 48, 626);
+    ctx.font = "600 10px 'DM Sans', sans-serif";
+    ctx.fillStyle = "rgba(255,255,255,0.22)";
+    ctx.fillText("AI DRIVING TEST AREA · VOICE CONTROL ONLY", 48, 643);
+    ctx.restore();
+  }
+
+  function drawRoadArrow(x, y, rotation) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    ctx.fillStyle = "rgba(255,255,255,0.18)";
+    ctx.beginPath();
+    ctx.moveTo(0, -25);
+    ctx.lineTo(17, -4);
+    ctx.lineTo(7, -4);
+    ctx.lineTo(7, 22);
+    ctx.lineTo(-7, 22);
+    ctx.lineTo(-7, -4);
+    ctx.lineTo(-17, -4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawTargetBay() {
+    const pulse = 0.5 + Math.sin(visual.targetPulse * 2.4) * 0.5;
+    ctx.save();
+    ctx.fillStyle = `rgba(88, 227, 154, ${0.09 + pulse * 0.035})`;
+    roundRect(ctx, TARGET.x + 5, TARGET.y + 5, TARGET.width - 10, TARGET.height - 10, 8);
+    ctx.fill();
+
+    ctx.strokeStyle = `rgba(88, 227, 154, ${0.62 + pulse * 0.25})`;
+    ctx.lineWidth = 4;
+    ctx.setLineDash([12, 9]);
+    roundRect(ctx, TARGET.x + 5, TARGET.y + 5, TARGET.width - 10, TARGET.height - 10, 8);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.translate(TARGET.x + TARGET.width / 2, TARGET.y + TARGET.height / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(151, 255, 200, 0.72)";
+    ctx.font = "800 15px 'Noto Sans SC', sans-serif";
+    ctx.fillText("目标车位", 0, -7);
+    ctx.fillStyle = "rgba(151, 255, 200, 0.42)";
+    ctx.font = "700 10px 'DM Sans', sans-serif";
+    ctx.fillText("PARK HERE", 0, 10);
+    ctx.restore();
+  }
+
+  function drawObstacles() {
+    for (const obstacle of obstacles) {
+      if (obstacle.type === "car") drawParkedCar(obstacle);
+      else drawRectObstacle(obstacle);
+    }
+  }
+
+  function drawRectObstacle(obstacle) {
+    ctx.save();
+    ctx.translate(obstacle.x, obstacle.y);
+    ctx.rotate(obstacle.angle || 0);
+    ctx.fillStyle = "rgba(0,0,0,0.22)";
+    roundRect(ctx, -obstacle.width / 2 + 4, -obstacle.height / 2 + 6, obstacle.width, obstacle.height, 7);
+    ctx.fill();
+    ctx.fillStyle = obstacle.color;
+    roundRect(ctx, -obstacle.width / 2, -obstacle.height / 2, obstacle.width, obstacle.height, 7);
+    ctx.fill();
+    ctx.fillStyle = "rgba(84,76,64,0.22)";
+    ctx.fillRect(-obstacle.width / 2, -2, obstacle.width, 4);
+    ctx.restore();
+  }
+
+  function drawParkedCar(obstacle) {
+    ctx.save();
+    ctx.translate(obstacle.x, obstacle.y + 7);
+    ctx.rotate(obstacle.angle || 0);
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    roundRect(ctx, -obstacle.width / 2 + 5, -obstacle.length / 2 + 8, obstacle.width, obstacle.length, 17);
+    ctx.fill();
+
+    ctx.fillStyle = obstacle.color;
+    roundRect(ctx, -obstacle.width / 2, -obstacle.length / 2, obstacle.width, obstacle.length, 16);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(22,32,44,0.78)";
+    roundRect(ctx, -obstacle.width / 2 + 8, -obstacle.length / 2 + 28, obstacle.width - 16, 42, 8);
+    ctx.fill();
+    roundRect(ctx, -obstacle.width / 2 + 8, 9, obstacle.width - 16, 40, 8);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255,255,255,0.48)";
+    ctx.fillRect(-obstacle.width / 2 + 8, -obstacle.length / 2 + 7, 13, 5);
+    ctx.fillRect(obstacle.width / 2 - 21, -obstacle.length / 2 + 7, 13, 5);
+    ctx.fillStyle = "rgba(255,67,77,0.65)";
+    ctx.fillRect(-obstacle.width / 2 + 8, obstacle.length / 2 - 12, 13, 5);
+    ctx.fillRect(obstacle.width / 2 - 21, obstacle.length / 2 - 12, 13, 5);
+    ctx.restore();
+  }
+
+  function drawCones() {
+    for (const cone of cones) {
+      ctx.save();
+      ctx.translate(cone.x, cone.y);
+      ctx.fillStyle = "rgba(0,0,0,0.28)";
+      ctx.beginPath();
+      ctx.ellipse(4, 8, 15, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#f48a2e";
+      ctx.beginPath();
+      ctx.moveTo(0, -17);
+      ctx.lineTo(11, 9);
+      ctx.lineTo(-11, 9);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#f4f0e7";
+      ctx.fillRect(-7, -1, 14, 5);
+      ctx.fillStyle = "#d86f1e";
+      roundRect(ctx, -14, 8, 28, 6, 3);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawSkidMarks() {
+    ctx.save();
+    for (const mark of visual.skidMarks) {
+      ctx.globalAlpha = clamp(mark.life / 5.5, 0, 0.26);
+      ctx.translate(mark.x, mark.y);
+      ctx.rotate(mark.angle);
+      ctx.fillStyle = "#101115";
+      roundRect(ctx, -3, -8, 6, 16, 2);
+      ctx.fill();
+      ctx.rotate(-mark.angle);
+      ctx.translate(-mark.x, -mark.y);
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function drawPlayerCar() {
+    ctx.save();
+    ctx.translate(car.x + 6, car.y + 9);
+    ctx.rotate(car.angle);
+    ctx.fillStyle = "rgba(0,0,0,0.36)";
+    roundRect(ctx, -CAR_SPEC.width / 2, -CAR_SPEC.length / 2, CAR_SPEC.width, CAR_SPEC.length, 15);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(car.x, car.y);
+    ctx.rotate(car.angle);
+
+    drawWheel(-CAR_SPEC.width / 2 - 1, -CAR_SPEC.length / 2 + 20, car.steer);
+    drawWheel(CAR_SPEC.width / 2 + 1, -CAR_SPEC.length / 2 + 20, car.steer);
+    drawWheel(-CAR_SPEC.width / 2 - 1, CAR_SPEC.length / 2 - 20, 0);
+    drawWheel(CAR_SPEC.width / 2 + 1, CAR_SPEC.length / 2 - 20, 0);
+
+    const bodyGradient = ctx.createLinearGradient(-CAR_SPEC.width / 2, 0, CAR_SPEC.width / 2, 0);
+    bodyGradient.addColorStop(0, "#e8b72e");
+    bodyGradient.addColorStop(0.48, "#ffdc50");
+    bodyGradient.addColorStop(1, "#d89c1e");
+    ctx.fillStyle = bodyGradient;
+    roundRect(ctx, -CAR_SPEC.width / 2, -CAR_SPEC.length / 2, CAR_SPEC.width, CAR_SPEC.length, 14);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(21,27,36,0.9)";
+    roundRect(ctx, -CAR_SPEC.width / 2 + 7, -CAR_SPEC.length / 2 + 18, CAR_SPEC.width - 14, 27, 7);
+    ctx.fill();
+    roundRect(ctx, -CAR_SPEC.width / 2 + 7, 5, CAR_SPEC.width - 14, 28, 7);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255,255,255,0.2)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, -CAR_SPEC.length / 2 + 19);
+    ctx.lineTo(0, -CAR_SPEC.length / 2 + 45);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, 6);
+    ctx.lineTo(0, 32);
+    ctx.stroke();
+
+    ctx.fillStyle = "#fff7cf";
+    ctx.fillRect(-CAR_SPEC.width / 2 + 6, -CAR_SPEC.length / 2 + 4, 11, 5);
+    ctx.fillRect(CAR_SPEC.width / 2 - 17, -CAR_SPEC.length / 2 + 4, 11, 5);
+
+    ctx.fillStyle = car.gear === -1 ? "#f8f8ff" : "#ff5b62";
+    ctx.fillRect(-CAR_SPEC.width / 2 + 6, CAR_SPEC.length / 2 - 9, 11, 5);
+    ctx.fillRect(CAR_SPEC.width / 2 - 17, CAR_SPEC.length / 2 - 9, 11, 5);
+
+    ctx.fillStyle = "rgba(20,21,25,0.72)";
+    roundRect(ctx, -17, CAR_SPEC.length / 2 - 17, 34, 9, 3);
+    ctx.fill();
+    ctx.fillStyle = "#f3f3ef";
+    ctx.font = "800 7px 'DM Sans', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("AI 002", 0, CAR_SPEC.length / 2 - 10);
+
+    ctx.fillStyle = "rgba(255,255,255,0.33)";
+    roundRect(ctx, -CAR_SPEC.width / 2 + 4, -24, 4, 43, 2);
+    ctx.fill();
+
+    ctx.restore();
+
+    if (!game.started && !game.demo) {
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,216,75,0.45)";
+      ctx.lineWidth = 3;
+      ctx.setLineDash([9, 8]);
+      ctx.beginPath();
+      ctx.moveTo(car.x - 7, car.y - 52);
+      ctx.bezierCurveTo(792, 404, 735, 374, 730, 322);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(255,216,75,0.85)";
+      ctx.font = "700 11px 'Noto Sans SC', sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("先倒车＋左打死", 765, 376);
+      ctx.restore();
+    }
+  }
+
+  function drawWheel(x, y, steerAngle) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(steerAngle);
+    ctx.fillStyle = "#15171c";
+    roundRect(ctx, -4, -10, 8, 20, 3);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawParticles() {
+    for (const particle of visual.particles) {
+      ctx.save();
+      ctx.globalAlpha = clamp(particle.life / particle.maxLife, 0, 1);
+      ctx.fillStyle = "#ffd84b";
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawConfetti() {
+    for (const piece of visual.confetti) {
+      ctx.save();
+      ctx.translate(piece.x, piece.y);
+      ctx.rotate(piece.rotation);
+      ctx.globalAlpha = clamp(piece.life / 1.2, 0, 1);
+      ctx.fillStyle = piece.color;
+      ctx.fillRect(-piece.width / 2, -piece.height / 2, piece.width, piece.height);
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function roundRect(context, x, y, width, height, radius) {
+    const r = Math.min(radius, Math.abs(width) / 2, Math.abs(height) / 2);
+    context.beginPath();
+    context.moveTo(x + r, y);
+    context.arcTo(x + width, y, x + width, y + height, r);
+    context.arcTo(x + width, y + height, x, y + height, r);
+    context.arcTo(x, y + height, x, y, r);
+    context.arcTo(x, y, x + width, y, r);
+    context.closePath();
+  }
+
+  function gameLoop(timestamp) {
+    const dt = Math.min((timestamp - game.lastFrameAt) / 1000, 0.033);
+    game.lastFrameAt = timestamp;
+    updateDemo(timestamp);
+    updatePhysics(dt, timestamp);
+    updateEffects(dt);
+    drawScene();
+    requestAnimationFrame(gameLoop);
+  }
+
+  function copyResultText() {
+    const outcome = game.failed ? "把训练场撞到申请心理援助" : "只靠语音把AI妹妹教会了倒车入库";
+    const text = `我${outcome}：${game.finalScore}分，用时${formatTime(game.elapsed)}，碰撞${game.crashes}次。\n\n这个小游戏里我坐在“副驾驶”，不能碰方向盘，只能说“挂倒挡、左打死、回正、停车”。最离谱的是AI妹妹还会误听和顶嘴。\n\n#AI游戏 #VibeCoding #AI驾校 #倒车入库`;
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        dom.copyResultButton.textContent = "已复制";
+        window.setTimeout(() => { dom.copyResultButton.textContent = "复制战绩文案"; }, 1600);
+      })
+      .catch(() => showToast("复制失败，请手动选择对话中的文案", "danger"));
+  }
+
+  function bindEvents() {
+    dom.sendButton.addEventListener("click", () => submitCommand(dom.commandInput.value));
+    dom.commandInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.isComposing) submitCommand(dom.commandInput.value);
+    });
+    dom.micButton.addEventListener("click", toggleListening);
+    dom.clearLogButton.addEventListener("click", clearLog);
+    dom.resetButton.addEventListener("click", () => {
+      if (game.listening && speechRecognition) speechRecognition.stop();
+      resetGame();
+      clearLog();
+      showToast("已重置训练场");
+    });
+    dom.soundButton.addEventListener("click", () => {
+      game.muted = !game.muted;
+      dom.soundButton.textContent = game.muted ? "🔇" : "🔊";
+      dom.soundButton.setAttribute("aria-pressed", String(!game.muted));
+      if (game.muted && "speechSynthesis" in window) window.speechSynthesis.cancel();
+      showToast(game.muted ? "角色语音已关闭" : "角色语音已开启");
+    });
+    dom.demoButton.addEventListener("click", () => {
+      if (game.demo) {
+        stopDemo();
+        car.targetSpeed = 0;
+        showToast("自动演示已停止");
+      } else {
+        startDemo();
+      }
+    });
+    dom.helpButton.addEventListener("click", () => openModal(dom.helpModal));
+    document.querySelectorAll("[data-close-modal='help']").forEach((element) => {
+      element.addEventListener("click", () => closeModal(dom.helpModal));
+    });
+    dom.commandChips.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-command]");
+      if (!button) return;
+      submitCommand(button.dataset.command);
+    });
+    dom.copyResultButton.addEventListener("click", copyResultText);
+    dom.playAgainButton.addEventListener("click", () => {
+      closeModal(dom.resultModal);
+      resetGame({ keepModal: true });
+      clearLog();
+    });
+    dom.difficultySelect.addEventListener("change", () => {
+      const labels = { "0": "认真模式：不故意误听", "0.08": "迷糊模式：偶尔听反", "0.18": "暴走模式：请自求多福" };
+      showToast(labels[dom.difficultySelect.value] || "难度已更新");
+    });
+    dom.enhancedToggle.addEventListener("change", () => {
+      showToast(dom.enhancedToggle.checked
+        ? "已开启增强理解；未配置服务时会自动回退"
+        : "已切回零成本本地理解", "", 2400);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeModal(dom.helpModal);
+        if (game.finished) closeModal(dom.resultModal);
+      }
+    });
+  }
+
+  function initVoices() {
+    if (!("speechSynthesis" in window)) return;
+    const refresh = () => { availableVoices = window.speechSynthesis.getVoices(); };
+    refresh();
+    window.speechSynthesis.addEventListener?.("voiceschanged", refresh);
+  }
+
+  function init() {
+    setupCanvas();
+    bindEvents();
+    initSpeechRecognition();
+    initVoices();
+    resetGame({ silent: true });
+    drawScene();
+    requestAnimationFrame(gameLoop);
+
+    window.setTimeout(() => {
+      try {
+        if (!sessionStorage.getItem("ai-driving-help-seen")) {
+          openModal(dom.helpModal);
+          sessionStorage.setItem("ai-driving-help-seen", "1");
+        }
+      } catch (error) {
+        // Some embedded previews disable storage. The game remains fully usable.
+        openModal(dom.helpModal);
+      }
+    }, 420);
+  }
+
+  function debugSnapshot() {
+    return {
+      car: {
+        x: Number(car.x.toFixed(2)),
+        y: Number(car.y.toFixed(2)),
+        angleDegrees: Number(toDeg(car.angle).toFixed(2)),
+        speed: Number(car.speed.toFixed(2)),
+        targetSpeed: Number(car.targetSpeed.toFixed(2)),
+        steeringDegrees: Number(toDeg(car.steer).toFixed(2)),
+      },
+      game: {
+        started: game.started,
+        finished: game.finished,
+        failed: game.failed,
+        elapsed: Number(game.elapsed.toFixed(2)),
+        crashes: game.crashes,
+        unclear: game.unclear,
+        score: currentScore(),
+      },
+      parking: {
+        inside: isCarFullyInTarget(),
+        aligned: isVerticallyAligned(),
+      },
+    };
+  }
+
+  function debugAdvance(seconds, stopWhen = null) {
+    const frames = Math.ceil(seconds * 60);
+    const base = performance.now();
+    if (game.started) game.startTime = base - game.elapsed * 1000;
+    for (let i = 0; i < frames; i += 1) {
+      const now = base + (i + 1) * (1000 / 60);
+      updatePhysics(1 / 60, now);
+      updateEffects(1 / 60);
+      if (typeof stopWhen === "function" && stopWhen()) break;
+      if (game.finished) break;
+    }
+    drawScene();
+    return debugSnapshot();
+  }
+
+  function debugAutopark() {
+    const previousMuted = game.muted;
+    const previousDifficulty = dom.difficultySelect.value;
+    game.muted = true;
+    dom.difficultySelect.value = "0";
+    resetGame({ silent: true });
+
+    applyInstruction(parseLocalCommand("挂倒挡，方向盘向左打死，慢慢倒"));
+    debugAdvance(8, () => car.angle >= toRad(176));
+    applyInstruction(parseLocalCommand("回正，继续倒"));
+    debugAdvance(8, () => car.y <= TARGET.y + TARGET.height / 2);
+    applyInstruction(parseLocalCommand("停车，踩刹车"));
+    debugAdvance(2.5);
+
+    const snapshot = debugSnapshot();
+    game.muted = previousMuted;
+    dom.difficultySelect.value = previousDifficulty;
+    return snapshot;
+  }
+
+  window.__AI_DRIVE_DEBUG__ = {
+    snapshot: debugSnapshot,
+    advance: debugAdvance,
+    autopark: debugAutopark,
+    parse: parseLocalCommand,
+  };
+
+  init();
+})();
+  </script>
+</body>
+</html>

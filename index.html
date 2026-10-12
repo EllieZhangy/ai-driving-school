@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#12131a" />
+  <meta name="description" content="AI驾校：只能用语音或文字教AI妹妹完成倒车入库。" />
+  <title>AI驾校｜教妹妹倒车入库</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="ambient ambient-a" aria-hidden="true"></div>
+  <div class="ambient ambient-b" aria-hidden="true"></div>
+
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <div class="eyebrow">VOICE-ONLY PARKING GAME</div>
+        <div class="brand-line">
+          <h1>AI驾校</h1>
+          <span class="title-divider">/</span>
+          <p>教妹妹倒车入库</p>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button id="helpButton" class="icon-button" type="button" aria-label="查看玩法">?</button>
+        <button id="soundButton" class="icon-button" type="button" aria-label="切换声音" aria-pressed="true">🔊</button>
+        <button id="resetButton" class="secondary-button" type="button">重新开练</button>
+      </div>
+    </header>
+
+    <section class="score-strip" aria-label="游戏状态">
+      <div class="score-item score-primary">
+        <span class="score-label">当前得分</span>
+        <strong id="scoreValue">100</strong>
+      </div>
+      <div class="score-item">
+        <span class="score-label">用时</span>
+        <strong id="timeValue">00:00</strong>
+      </div>
+      <div class="score-item">
+        <span class="score-label">碰撞</span>
+        <strong><span id="crashValue">0</span><small> / 4</small></strong>
+      </div>
+      <div class="score-item">
+        <span class="score-label">挡位</span>
+        <strong id="gearValue">P</strong>
+      </div>
+      <div class="score-item score-wide">
+        <span class="score-label">妹妹状态</span>
+        <strong id="moodValue">还算冷静</strong>
+      </div>
+    </section>
+
+    <section class="game-grid">
+      <div class="stage-card">
+        <div class="stage-head">
+          <div>
+            <span class="section-kicker">科目二 · 第一关</span>
+            <h2>右侧倒车入库</h2>
+          </div>
+          <div class="difficulty-wrap">
+            <label for="difficultySelect">误听概率</label>
+            <select id="difficultySelect" aria-label="选择妹妹的误听概率">
+              <option value="0">认真 · 0%</option>
+              <option value="0.08" selected>迷糊 · 8%</option>
+              <option value="0.18">暴走 · 18%</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="canvasWrap" class="canvas-wrap">
+          <canvas id="gameCanvas" width="1100" height="700" aria-label="倒车入库游戏画面"></canvas>
+          <div class="objective-pill">
+            <span class="objective-dot"></span>
+            目标：完整停进绿色车位并刹停
+          </div>
+          <div id="toast" class="stage-toast" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="stage-foot">
+          <div class="legend">
+            <span><i class="legend-target"></i>目标车位</span>
+            <span><i class="legend-car"></i>你的车</span>
+            <span><i class="legend-obstacle"></i>障碍物</span>
+          </div>
+          <button id="demoButton" class="demo-button" type="button">▶ 自动演示一遍</button>
+        </div>
+      </div>
+
+      <aside class="coach-card" aria-label="AI妹妹与指令区">
+        <div class="sister-panel">
+          <div id="avatar" class="avatar" aria-hidden="true">
+            <div class="hair hair-back"></div>
+            <div class="face">
+              <div class="brow brow-left"></div>
+              <div class="brow brow-right"></div>
+              <div class="eye eye-left"></div>
+              <div class="eye eye-right"></div>
+              <div class="mouth"></div>
+              <div class="blush blush-left"></div>
+              <div class="blush blush-right"></div>
+            </div>
+            <div class="hair hair-front"></div>
+            <div class="hair-pin">✦</div>
+          </div>
+          <div class="sister-copy">
+            <div class="name-line">
+              <strong>AI妹妹 · 小满</strong>
+              <span id="listeningBadge" class="status-badge">等你发话</span>
+            </div>
+            <div id="speechBubble" class="speech-bubble" aria-live="polite">
+              哥/姐，我今天一定能一把过。大概吧。
+            </div>
+          </div>
+        </div>
+
+        <div class="command-guide">
+          <div class="guide-head">
+            <h3>你可以这样说</h3>
+            <span>支持组合指令</span>
+          </div>
+          <div class="chips" id="commandChips">
+            <button type="button" data-command="挂倒挡，方向盘向左打死，慢慢倒">倒挡＋左打死＋慢倒</button>
+            <button type="button" data-command="回正，继续倒">回正继续倒</button>
+            <button type="button" data-command="停车，踩刹车">停车</button>
+            <button type="button" data-command="方向盘向右打一点">右打一小圈</button>
+          </div>
+        </div>
+
+        <div class="input-panel">
+          <button id="micButton" class="mic-button" type="button">
+            <span class="mic-icon">●</span>
+            <span class="mic-copy">
+              <strong>按一下开始说话</strong>
+              <small id="micHint">推荐使用 Chrome / Edge</small>
+            </span>
+            <span class="voice-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          </button>
+
+          <div class="text-command-row">
+            <input id="commandInput" type="text" autocomplete="off" maxlength="100" placeholder="也可以打字：挂倒挡，左打死，慢慢倒" aria-label="输入驾驶指令" />
+            <button id="sendButton" type="button">发送</button>
+          </div>
+
+          <div class="ai-mode-row">
+            <label class="toggle-label" for="enhancedToggle">
+              <input id="enhancedToggle" type="checkbox" />
+              <span class="toggle-ui"></span>
+              <span>
+                <strong>大模型增强理解</strong>
+                <small>需运行 server.mjs 并配置 API；失败会自动回退本地解析</small>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="log-panel">
+          <div class="log-head">
+            <h3>对话记录</h3>
+            <button id="clearLogButton" type="button">清空</button>
+          </div>
+          <div id="commandLog" class="command-log" aria-live="polite">
+            <div class="log-empty">第一条指令会出现在这里。</div>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div id="helpModal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal="help"></div>
+    <section class="modal-card help-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <button class="modal-close" type="button" data-close-modal="help" aria-label="关闭">×</button>
+      <span class="section-kicker">HOW TO PLAY</span>
+      <h2 id="helpTitle">你不能碰方向盘，只能教她。</h2>
+      <div class="help-steps">
+        <div><b>01</b><p><strong>先说挡位和方向</strong><span>例如“挂倒挡，方向盘向左打死，慢慢倒”。</span></p></div>
+        <div><b>02</b><p><strong>观察车身角度</strong><span>车身转到竖直时说“回正，继续倒”。</span></p></div>
+        <div><b>03</b><p><strong>停稳才算成功</strong><span>完整进入绿色车位后，记得明确说“停车”。</span></p></div>
+      </div>
+      <div class="tip-box">
+        <strong>导演提示</strong>
+        <span>要录演示素材，可以先点“自动演示一遍”，再切到暴走模式录搞笑版本。</span>
+      </div>
+      <button class="primary-button modal-primary" type="button" data-close-modal="help">我会了，开始吵架</button>
+    </section>
+  </div>
+
+  <div id="resultModal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <section class="modal-card result-card" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+      <div id="resultEmoji" class="result-emoji">🏁</div>
+      <span class="section-kicker">本次科目二成绩</span>
+      <h2 id="resultTitle">居然真的停进去了</h2>
+      <div class="result-score"><strong id="finalScore">88</strong><span>分</span></div>
+      <div class="result-grid">
+        <div><span>总用时</span><strong id="finalTime">00:32</strong></div>
+        <div><span>碰撞次数</span><strong id="finalCrashes">0</strong></div>
+        <div><span>无效指令</span><strong id="finalUnclear">0</strong></div>
+      </div>
+      <p id="resultComment" class="result-comment">小满：我就说我有天赋吧。</p>
+      <div class="result-actions">
+        <button id="copyResultButton" class="secondary-button" type="button">复制战绩文案</button>
+        <button id="playAgainButton" class="primary-button" type="button">再来一把</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
