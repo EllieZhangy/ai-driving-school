@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Voice-command parking game prototype",
   "scripts": {
-    "start": "node server.mjs"
+    "start": "node server.mjs",
+    "test": "node --test tests/game.test.cjs"
   },
   "engines": {
     "node": ">=20"

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#12131a" />
   <meta name="description" content="AI驾校：只能用语音或文字教AI妹妹完成倒车入库。" />
   <title>AI驾校｜教妹妹倒车入库</title>
@@ -31,12 +31,13 @@
     </header>
 
     <section id="homeScreen" class="home-screen">
-      <div class="home-hero"><span class="section-kicker">WELCOME TO AI DRIVING SCHOOL</span><h2>你负责指挥。<br>她负责……制造意外。</h2><p>坐上副驾驶，教小满倒车入库。先看一场爆笑示范，或者直接上场试试。</p><button class="primary-button" data-route="demo">▶ 先看爆笑 Demo</button></div>
+      <div class="home-hero"><div class="hero-art" aria-hidden="true"><div class="hero-bay">P</div><div class="hero-car"><span>AI</span></div><span class="hero-boom">哎呀！</span><div class="hero-cone">▲</div></div><div class="hero-copy"><span class="section-kicker">嘴硬学员 · 副驾教练 · 两次事故</span><h2>你负责指挥。<br>她负责……制造意外。</h2><p>坐上副驾驶，教小满倒车入库。先看一场爆笑示范，或者直接上场试试。</p><button class="primary-button" data-route="demo">▶ 先看爆笑 Demo</button><span class="hero-caption">约 50 秒 · 看她嘴硬，你来收场</span></div></div>
       <div class="level-card"><span class="level-number">01</span><div><span class="section-kicker">科目二 · 开放练习</span><h3>右侧倒车入库</h3><p>把车完整倒进绿色车位，再喊一声“停车”。<br>方向盘归她，耐心归你。</p></div><div class="level-actions"><button class="secondary-button" data-route="demo">观看 Demo</button><button class="primary-button" data-route="practice">自己尝试 →</button></div></div>
-      <p class="home-note">更多关卡还在修路中 · 本关支持中文语音与文字指令</p>
+      <p class="home-note">手机直接玩 · 无需注册 · 娱乐游戏，不用于实际驾驶教学</p>
     </section>
     <div id="levelScreen" hidden>
-    <nav class="level-nav"><button class="secondary-button" data-route="home">← 返回首页</button><strong id="modeLabel">第一关 · 自己尝试</strong><label>Demo 语速 <select id="voiceRate"><option value="0.65">慢悠悠</option><option value="0.8" selected>慢一点</option><option value="1">正常</option></select></label></nav>
+    <nav class="level-nav"><button class="secondary-button" data-route="home">← 返回首页</button><strong id="modeLabel">第一关 · 自己尝试</strong><label class="demo-speed-control">播放速度 <select id="demoSpeed" aria-label="Demo 播放速度"><option value="0.75">0.75× 慢慢看</option><option value="1" selected>1× 正常</option><option value="1.25">1.25× 快一点</option></select></label></nav>
+    <div id="browserNotice" class="browser-notice" hidden role="status"></div>
     <section class="score-strip" aria-label="游戏状态">
       <div class="score-item score-primary">
         <span class="score-label">当前得分</span>
@@ -83,9 +84,11 @@
             <span class="objective-dot"></span>
             目标：完整停进绿色车位并刹停
           </div>
+          <div id="comicCaption" class="comic-caption" aria-hidden="true"></div>
           <div id="toast" class="stage-toast" role="status" aria-live="polite"></div>
         </div>
 
+        <div id="demoControls" class="demo-controls" hidden><button id="demoPause" class="secondary-button" type="button" aria-pressed="false">Ⅱ 暂停</button><span id="demoChapter">准备出发</span><progress id="demoProgress" max="1" value="0" aria-label="Demo 播放进度"></progress></div>
         <div class="stage-foot">
           <div class="legend">
             <span><i class="legend-target"></i>目标车位</span>
@@ -140,8 +143,8 @@
           <button id="micButton" class="mic-button" type="button">
             <span class="mic-icon">●</span>
             <span class="mic-copy">
-              <strong>按一下开始说话</strong>
-              <small id="micHint">推荐使用 Chrome / Edge</small>
+              <strong>按住说话，松开发送</strong>
+              <small id="micHint">也可输入文字，或点快捷指令</small>
             </span>
             <span class="voice-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
           </button>
@@ -163,7 +166,7 @@
           </div>
         </div>
 
-        <div class="log-panel">
+        <details class="log-panel" open><summary>指令与回复记录</summary>
           <div class="log-head">
             <h3>对话记录</h3>
             <button id="clearLogButton" type="button">清空</button>
@@ -171,13 +174,13 @@
           <div id="commandLog" class="command-log" aria-live="polite">
             <div class="log-empty">第一条指令会出现在这里。</div>
           </div>
-        </div>
+        </details>
       </aside>
     </section>
     </div>
   </main>
 
-  <div id="demoEndModal" class="modal" aria-hidden="true"><div class="modal-backdrop"></div><section class="modal-card result-card" role="dialog" aria-modal="true" aria-labelledby="demoEndTitle"><div class="result-emoji">💥 → 🚗 → 🎉</div><span class="section-kicker">DEMO COMPLETE</span><h2 id="demoEndTitle">撞了三次，终于进去了。</h2><p>小满：这是倒车入库，不是倒车入土。<br>现在轮到你当教练了！</p><div class="result-actions"><button class="secondary-button" data-route="demo">再看一遍 Demo</button><button class="primary-button" data-route="practice">自己尝试</button></div><button class="secondary-button modal-primary" data-route="home">返回首页</button></section></div>
+  <div id="demoEndModal" class="modal" aria-hidden="true"><div class="modal-backdrop"></div><section class="modal-card result-card" role="dialog" aria-modal="true" aria-labelledby="demoEndTitle"><div class="result-emoji">💥 → 🚗 → 🎉</div><span class="section-kicker">DEMO COMPLETE</span><h2 id="demoEndTitle">撞了两次，终于进去了。</h2><p>小满：这是倒车入库，不是倒车入土。<br>现在轮到你当教练了！</p><div class="result-actions"><button class="secondary-button" data-route="demo">再看一遍 Demo</button><button class="primary-button" data-route="practice">自己尝试</button></div><button class="secondary-button modal-primary" data-route="home">返回首页</button></section></div>
   <div id="helpModal" class="modal" aria-hidden="true">
     <div class="modal-backdrop" data-close-modal="help"></div>
     <section class="modal-card help-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">

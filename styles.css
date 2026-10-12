@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap');
+/* System fonts keep the mobile build independent of external asset hosts. */
 
 :root {
   --bg: #101117;
@@ -628,3 +628,58 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 body[data-screen="home"] #resetButton { display: none; }
 body[data-screen="demo"] .command-guide, body[data-screen="demo"] .input-panel, body[data-screen="demo"] .difficulty-wrap { display: none; }
 @media(max-width:760px) { .level-card { flex-wrap: wrap; gap: 16px; padding: 22px; } .level-actions { margin-left: 0; width: 100%; } .level-actions button { flex: 1; } .level-nav label { margin-left: 0; } }
+
+/* A lightweight diorama style adds depth without a WebGL dependency. */
+body { background: #111a21; }
+.app-shell { padding-top: max(18px, env(safe-area-inset-top)); padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+.home-hero { position: relative; overflow: hidden; background: radial-gradient(ellipse at 80% 20%,#294d55,transparent 70%),#192831; }
+.hero-copy { position: relative; z-index: 2; max-width: 620px; }
+.hero-caption { display: block; margin-top: 12px; color: #a5bbc1; font-size: 12px; }
+.hero-art { position: absolute; right: 5%; top: 18%; width: 300px; height: 270px; transform: rotate(-12deg); opacity: .85; }
+.hero-bay { position: absolute; width: 180px; height: 240px; border: 5px dashed #74dfb4; border-radius: 20px; transform: skewY(14deg); color: #74dfb4; text-align: center; font-size: 110px; background: #203f3c; box-shadow: 18px 25px 0 #102d30; }
+.hero-car { position: absolute; left: 120px; top: 110px; width: 92px; height: 150px; border-radius: 24px; background: linear-gradient(90deg,#b98412,#ffdc60 45%,#efbc34); box-shadow: 9px 13px 0 #8c581a,22px 30px 18px #0c1e25; transform: rotate(44deg); border: 3px solid #ffe692; }
+.hero-car::before,.hero-car::after { content:''; position:absolute; left:12px; right:12px; height:34px; border-radius:12px; background:linear-gradient(130deg,#9ce7e7,#214657); }
+.hero-car::before { top:20px; } .hero-car::after { bottom:20px; }
+.hero-car span { position:absolute; top:63px; width:100%; text-align:center; color:#65400f; font-weight:900; }
+.hero-boom { position:absolute; right:0; top:50px; color:#15242a; padding:12px; border-radius:50% 50% 50% 0; background:#fff2cb; font-weight:900; transform:rotate(12deg); }
+.hero-cone { position:absolute; bottom:-20px; left:15px; color:#ff9850; font-size:68px; text-shadow:8px 8px #824319; }
+.canvas-wrap { background: radial-gradient(ellipse at 50% 40%,#3b5b62,#14262f); }
+.stage-card { background:#1b2b34; } .coach-card { background:#19262f; }
+.browser-notice { padding: 12px 15px; border-radius:12px; border:1px solid #627b88; color:#d9e7ed; background:#263f4c; font-size:12px; line-height:1.6; margin-bottom:12px; }
+.demo-controls { display:flex; align-items:center; gap:12px; padding-top:14px; }
+.demo-controls button { min-height:44px; } .demo-controls span { font-size:12px; color:#bed5d9; } .demo-controls progress { margin-left:auto; width:30%; height:7px; accent-color:var(--yellow); }
+.comic-caption { position:absolute; top:28%; left:50%; pointer-events:none; opacity:0; transform:translate(-50%,0) scale(.6) rotate(-8deg); font-size:clamp(28px,5vw,64px); color:#ffe39d; text-shadow:3px 3px #773b32,-2px -2px #773b32,4px 7px #11212a; font-weight:900; transition:opacity .2s,transform .2s; white-space:nowrap; }
+.comic-caption.visible { opacity:1; transform:translate(-50%,-12px) scale(1) rotate(-8deg); }
+.log-panel summary { cursor:pointer; font-size:13px; font-weight:700; min-height:30px; }
+.log-panel .log-head { margin-top:8px; } .log-panel .log-head h3 { display:none; }
+.mic-button { touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+body:not([data-screen="demo"]) .demo-speed-control { display:none; }
+body[data-screen="demo"] .score-strip { display:none; }
+@media(min-width:1000px) { .hero-copy { max-width:65%; } }
+@media(max-width:760px) {
+  .app-shell { width:calc(100% - 24px); }
+  .topbar { gap:8px; margin-bottom:12px; align-items:center; }
+  .brand-line p { font-size:12px; } .brand-line h1 { font-size:27px; }
+  .eyebrow { font-size:8px; letter-spacing:.1em; } .top-actions { gap:5px; } .icon-button { width:40px; height:40px; }
+  .home-screen { padding:6px 0; } .home-hero { padding:240px 22px 26px; }
+  .hero-art { top:0; right:calc(50% - 160px); transform:rotate(-12deg) scale(.72); transform-origin:center top; opacity:1; }
+  .home-hero h2 { font-size:34px; margin:14px 0; } .home-hero p { font-size:14px; }
+  .home-hero .primary-button { width:100%; font-size:15px; }
+  .home-hero .section-kicker { font-size:9px; } .hero-caption { text-align:center; }
+  .level-card { padding:18px; margin-top:12px; } .level-number { font-size:42px; } .level-card h3 { font-size:20px; }
+  .level-card p { font-size:12px; margin:8px 0; } .level-actions button { padding:0 10px; min-height:48px; font-size:13px; }
+  .level-nav { gap:8px; justify-content:space-between; margin-bottom:10px; } .level-nav strong { font-size:12px; } .level-nav label { width:100%; display:flex; align-items:center; gap:10px; }
+  .score-strip { grid-template-columns:repeat(4,1fr); margin-bottom:10px; } .score-item { min-height:52px; padding:7px 10px; } .score-wide { flex-direction:row; justify-content:space-between; min-height:36px; align-items:center; } .score-wide .score-label { margin:0; }
+  .game-grid { gap:10px; } .stage-card { padding:10px; } .stage-head h2 { font-size:17px; }
+  .canvas-wrap { aspect-ratio: 6 / 7; } .objective-pill { font-size:11px; top:8px; left:8px; padding:0 9px; }
+  .stage-toast { font-size:12px; max-width:95%; width:max-content; bottom:12px; padding:8px 10px; }
+  .legend { font-size:10px; } .stage-foot { align-items:center; padding-top:10px; }
+  .sister-panel { padding:12px; gap:7px; } .speech-bubble { font-size:14px; line-height:1.6; min-height:0; } .name-line strong { font-size:13px; }
+  .command-guide { padding:12px; } .chips button { font-size:12px; min-height:44px; }
+  .input-panel { padding:12px; } .mic-button { min-height:62px; } .mic-copy strong { font-size:14px; } .mic-copy small { font-size:11px; }
+  .text-command-row input { font-size:16px; height:44px; } .text-command-row button { font-size:14px; min-width:60px; }
+  .log-panel { min-height:0; padding:12px; } .log-panel:not([open]) { display:block; } .log-content p { font-size:12px; } .log-content strong { font-size:11px; }
+  .modal-card { padding:22px; } .result-card h2 { font-size:24px; } .result-card p { line-height:1.7; }
+  .home-note { font-size:11px; }
+}
+@media(prefers-reduced-motion:reduce) { .comic-caption { transition:none; } }

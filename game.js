@@ -122,6 +122,9 @@
     skidMarks: [],
     trailClock: 0,
     targetPulse: 0,
+    impact: 0,
+    impactX: 0,
+    impactY: 0,
   };
 
   let speechRecognition = null;
@@ -174,9 +177,14 @@
     return `${minutes}:${secs}`;
   }
 
+  let renderWidth = WORLD.width;
+  let renderHeight = WORLD.height;
   function setupCanvas() {
-    dom.canvas.width = Math.round(WORLD.width * dpr);
-    dom.canvas.height = Math.round(WORLD.height * dpr);
+    const mobile = window.innerWidth <= 760;
+    renderWidth = mobile ? 720 : WORLD.width;
+    renderHeight = mobile ? 840 : WORLD.height;
+    dom.canvas.width = Math.round(renderWidth * dpr);
+    dom.canvas.height = Math.round(renderHeight * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.imageSmoothingEnabled = true;
   }
@@ -211,6 +219,8 @@
     car.gear = 0;
 
     visual.shake = 0;
+    visual.impact = 0;
+    document.getElementById("comicCaption").classList.remove("visible");
     visual.particles = [];
     visual.confetti = [];
     visual.skidMarks = [];
@@ -287,7 +297,7 @@
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "zh-CN";
-    utterance.rate = game.demo ? Number(document.getElementById("voiceRate").value) : 1;
+    utterance.rate = 1.02;
     utterance.pitch = 1.13;
     const preferred = availableVoices.find((voice) => /zh-CN/i.test(voice.lang) && /Xiaoxiao|Tingting|Meijia|Female|女/i.test(voice.name))
       || availableVoices.find((voice) => /^zh/i.test(voice.lang));
@@ -714,11 +724,13 @@
     speechRecognition.maxAlternatives = 1;
 
     speechRecognition.onstart = () => {
+      voicePending = false;
       game.listening = true;
+      if (!voiceHeld) { speechRecognition.stop(); return; }
       finalTranscript = "";
       recognitionHadResult = false;
       dom.micButton.classList.add("listening");
-      dom.micButton.querySelector("strong").textContent = "正在听，你说吧";
+      dom.micButton.querySelector("strong").textContent = "正在听，松开发送";
       setBadge("正在听", "listening");
       dom.speechBubble.textContent = "我听着呢，别一紧张只会喊“啊啊啊”。";
     };
@@ -746,29 +758,53 @@
     };
 
     speechRecognition.onend = () => {
+      voicePending = false;
       game.listening = false;
       dom.micButton.classList.remove("listening");
-      dom.micButton.querySelector("strong").textContent = "按一下开始说话";
+      dom.micButton.querySelector("strong").textContent = "按住说话，松开发送";
       setBadge("等你发话");
-      const text = finalTranscript.trim();
+      const text = voiceCancelled ? "" : (finalTranscript || dom.commandInput.value).trim();
       finalTranscript = "";
       if (text) submitCommand(text);
-      else if (!recognitionHadResult) dom.speechBubble.textContent = "你刚才是不是只吸了一口气？";
+      else if (!voiceCancelled && document.body.dataset.screen === "practice" && !recognitionHadResult) dom.speechBubble.textContent = "你刚才是不是只吸了一口气？";
     };
   }
 
-  function toggleListening() {
+  let voiceHeld = false;
+  let voicePending = false;
+  let voiceCancelled = false;
+
+  function beginVoiceHold(event) {
+    if (document.body.dataset.screen !== "practice" || game.finished) return;
     if (!speechRecognition) {
-      showToast("当前浏览器不支持语音识别，请使用 Chrome / Edge 或直接输入文字", "", 3000);
+      showToast("麦克风不可用：请使用文字或快捷指令", "", 3000);
       dom.commandInput.focus();
       return;
     }
-    try {
-      if (game.listening) speechRecognition.stop();
-      else speechRecognition.start();
-    } catch (error) {
-      showToast("麦克风正在启动，请稍后再按一次");
-    }
+    if (voicePending || game.listening) return;
+    voiceHeld = true;
+    voiceCancelled = false;
+    voicePending = true;
+    recognitionHadResult = false;
+    dom.commandInput.value = "";
+    finalTranscript = "";
+    event?.preventDefault();
+    if (event?.pointerId !== undefined) dom.micButton.setPointerCapture(event.pointerId);
+    window.speechSynthesis?.cancel();
+    try { speechRecognition.start(); }
+    catch { voicePending = false; voiceHeld = false; showToast("麦克风正在启动，请稍后再试"); }
+  }
+
+  function endVoiceHold() {
+    voiceHeld = false;
+    if (game.listening) speechRecognition.stop();
+  }
+
+  function cancelVoiceHold() {
+    voiceCancelled = true;
+    voiceHeld = false;
+    finalTranscript = "";
+    speechRecognition?.abort();
   }
 
   function carCorners(atCar = car) {
@@ -1078,6 +1114,8 @@
   function updateEffects(dt) {
     visual.targetPulse += dt;
     visual.shake = Math.max(0, visual.shake - dt * 35);
+    visual.impact = Math.max(0, visual.impact - dt);
+    if (!visual.impact) document.getElementById("comicCaption").classList.remove("visible");
 
     for (const particle of visual.particles) {
       particle.life -= dt;
@@ -1103,55 +1141,76 @@
 
   // Demo choreography is cinematic; practice continues to use the vehicle physics.
   const demoScenes = [
-    { duration: 7, x: 820, y: 470, angle: 90, text: "今天争取一把过。先声明，一把是一个量词，不是次数。" },
-    { duration: 6, x: 1015, y: 470, angle: 90, crash: true, text: "哎呀！我挂的是倒挡，怎么人生还在往前冲？保险杠先下班了。" },
-    { duration: 7, x: 485, y: 470, angle: 90, text: "反方向，反方向！教练别急，我正在给训练场画一条心电图。" },
-    { duration: 6, x: 595, y: 270, angle: 180, crash: true, text: "砰！这不是撞车，这是和隔壁车打个招呼。它好像不太礼貌。" },
-    { duration: 7, x: 910, y: 470, angle: 90, text: "再往前一点。我的车技就像我的余额，来来回回，最后归零。" },
-    { duration: 6, x: 875, y: 275, angle: 180, crash: true, text: "轰！第三次了。车说它想退休，教练说他想转行。" },
-    { duration: 7, x: 820, y: 470, angle: 90, text: "好了，不闹了。挂倒挡，左打死，慢慢倒。车位，我这次真的来了。" },
-    { duration: 7, x: 730, y: 330, angle: 180, text: "车身转正，方向盘回正。刚才是喜剧，现在是教学，请认真看。" },
-    { duration: 7, x: 730, y: 163, angle: 180, text: "继续慢慢倒，进绿色车位，踩刹车。看！终于倒进去了，我先给自己鼓个掌。" },
+    { duration: 5, x: 820, y: 470, angle: 90, chapter: "01 / 自信出发", text: "放心，我一把过。你先别问，是哪一把。" },
+    { duration: 7, x: 1030, y: 470, angle: 90, crash: true, chapter: "02 / 保险杠先下班", text: "先往前一点。", punchline: "哎呀！保险杠先下班了。我还没批准呢！" },
+    { duration: 5, x: 755, y: 450, angle: 115, chapter: "03 / 战术撤退", text: "倒回来。这叫战术撤退，不叫方向感欠费。" },
+    { duration: 7, x: 597, y: 272, angle: 180, crash: true, chapter: "04 / 和隔壁车贴贴", text: "再倒一点，我有分寸。", punchline: "砰！只是和隔壁贴贴。教练，你怎么不笑了？" },
+    { duration: 6, x: 820, y: 470, angle: 90, chapter: "05 / 认真三秒钟", text: "好了，认真。挂倒挡，向左打死，慢慢倒。" },
+    { duration: 7, x: 730, y: 330, angle: 180, chapter: "06 / 回正，继续倒", text: "车身正了，方向盘回正。刚才是喜剧，现在是技术。" },
+    { duration: 7, x: 730, y: 163, angle: 180, chapter: "07 / 终于停进去了", text: "进绿色车位，踩刹车。看！两次事故，一次奇迹。" },
   ];
   let demoFrom = null;
-  let demoSceneStart = 0;
+  let demoSceneElapsed = 0;
+  let demoLastUpdate = 0;
   let demoArrived = false;
+  let demoPaused = false;
 
-  function enterDemoScene(now) {
+  function setDemoPaused(paused) {
+    demoPaused = paused;
+    const button = document.getElementById("demoPause");
+    button.textContent = paused ? "▶ 继续" : "Ⅱ 暂停";
+    button.setAttribute("aria-pressed", String(paused));
+    if (paused) window.speechSynthesis?.pause();
+    else window.speechSynthesis?.resume();
+  }
+
+  function enterDemoScene() {
     const scene = demoScenes[game.demoPhase];
     demoFrom = { x: car.x, y: car.y, angle: car.angle };
-    demoSceneStart = now;
+    demoSceneElapsed = 0;
     demoArrived = false;
-    car.gear = game.demoPhase % 2 ? -1 : 1;
-    setSisterSpeech(scene.text, scene.crash ? "panicked" : "neutral");
+    car.gear = game.demoPhase === 1 ? 1 : -1;
+    setSisterSpeech(scene.text, "neutral");
     setBadge(`Demo · ${game.demoPhase + 1}/${demoScenes.length}`);
+    document.getElementById("demoChapter").textContent = scene.chapter;
   }
 
   function updateDemo(now) {
     if (!game.demo) return;
+    const dt = Math.max(0, (now - demoLastUpdate) / 1000);
+    demoLastUpdate = now;
+    if (demoPaused) return;
     const scene = demoScenes[game.demoPhase];
-    // Slower narration extends each scene instead of cutting off the punchline.
-    const duration = scene.duration * 0.8 / Number(document.getElementById("voiceRate").value);
-    const elapsed = (now - demoSceneStart) / 1000;
-    const t = clamp(elapsed / (duration * 0.65), 0, 1);
+    // Playback controls change the animation timeline, never the narration rate.
+    demoSceneElapsed += dt * Number(document.getElementById("demoSpeed").value);
+    const t = clamp(demoSceneElapsed / (scene.duration * 0.55), 0, 1);
     const eased = t * t * (3 - 2 * t);
     car.x = demoFrom.x + (scene.x - demoFrom.x) * eased;
     car.y = demoFrom.y + (scene.y - demoFrom.y) * eased;
     car.angle = demoFrom.angle + (toRad(scene.angle) - demoFrom.angle) * eased;
-    game.elapsed = (now - game.demoStartedAt) / 1000;
+    game.elapsed += dt;
     if (t === 1 && !demoArrived) {
       demoArrived = true;
       if (scene.crash) {
         game.crashes += 1;
         visual.shake = 22;
+        visual.impact = 1.7;
+        visual.impactX = car.x;
+        visual.impactY = car.y;
         for (let i = 0; i < 5; i += 1) createImpactParticles();
-        showToast(["💥 保险杠：我先走一步", "💥 隔壁车：你礼貌吗？", "💥 教练：我的血压倒进去了"][game.crashes - 1], "danger", 3000);
+        const caption = document.getElementById("comicCaption");
+        caption.textContent = game.crashes === 1 ? "砰！提前下班" : "轰！礼貌贴贴";
+        caption.classList.add("visible");
+        showToast(game.crashes === 1 ? "💥 保险杠：这班我不上了" : "💥 隔壁车：你礼貌吗？", "danger", 3000);
+        setSisterSpeech(scene.punchline, "panicked");
       }
     }
+    document.getElementById("demoProgress").value = (game.demoPhase + clamp(demoSceneElapsed / scene.duration, 0, 1)) / demoScenes.length;
     updateHud();
-    if (elapsed < duration || (!game.muted && window.speechSynthesis?.speaking)) return;
+    // Let each punchline finish even at fast playback speeds.
+    if (demoSceneElapsed < scene.duration || (!game.muted && window.speechSynthesis?.speaking)) return;
     game.demoPhase += 1;
-    if (game.demoPhase < demoScenes.length) enterDemoScene(now);
+    if (game.demoPhase < demoScenes.length) enterDemoScene();
     else {
       stopDemo();
       car.gear = 0;
@@ -1175,11 +1234,14 @@
     dom.demoButton.textContent = "自己尝试 →";
     dom.demoButton.classList.add("active");
     clearLog();
-    enterDemoScene(game.demoStartedAt);
+    demoLastUpdate = game.demoStartedAt;
+    setDemoPaused(false);
+    enterDemoScene();
   }
 
   function stopDemo(restoreDifficulty = true) {
     if (!game.demo) return;
+    setDemoPaused(false);
     game.demo = false;
     game.demoPhase = 0;
     dom.demoButton.textContent = "▶ 自动演示一遍";
@@ -1189,7 +1251,7 @@
   }
 
   function navigate(screen) {
-    if (speechRecognition) speechRecognition.abort();
+    cancelVoiceHold();
     finalTranscript = "";
     stopDemo();
     window.speechSynthesis?.cancel();
@@ -1199,6 +1261,8 @@
     document.body.dataset.screen = screen;
     document.getElementById("homeScreen").hidden = screen !== "home";
     document.getElementById("levelScreen").hidden = screen === "home";
+    document.getElementById("demoControls").hidden = screen !== "demo";
+    if (window.innerWidth <= 760) document.querySelector(".log-panel").open = false;
     document.getElementById("modeLabel").textContent = screen === "demo" ? "第一关 · 爆笑 Demo" : "第一关 · 自己尝试";
     resetGame({ silent: true });
     clearLog();
@@ -1213,6 +1277,16 @@
     const shakeY = visual.shake ? (Math.random() - 0.5) * visual.shake : 0;
     ctx.translate(shakeX, shakeY);
 
+    ctx.fillStyle = "#18313c";
+    ctx.fillRect(0, 0, renderWidth, renderHeight);
+    // Project the simulation plane as a diorama; collision coordinates stay unchanged.
+    if (renderWidth === 720) {
+      const cameraX = clamp(Math.min(car.x - 230, 410), 0, 410);
+      ctx.transform(0.86, 0.07, -0.13, 0.88, 74 - cameraX * 0.86, 85);
+    } else ctx.transform(0.83, 0.075, -0.18, 0.79, 165, 22);
+    ctx.fillStyle = "#101f28";
+    roundRect(ctx, 0, 26, WORLD.width, WORLD.height, 26);
+    ctx.fill();
     drawGround();
     drawParkingLayout();
     drawSkidMarks();
@@ -1220,6 +1294,7 @@
     drawObstacles();
     drawCones();
     drawPlayerCar();
+    drawImpact();
     drawParticles();
     drawConfetti();
 
@@ -1228,12 +1303,12 @@
 
   function drawGround() {
     const gradient = ctx.createLinearGradient(0, 0, 0, WORLD.height);
-    gradient.addColorStop(0, "#3b3e47");
-    gradient.addColorStop(1, "#2d3038");
+    gradient.addColorStop(0, "#66828a");
+    gradient.addColorStop(1, "#405d66");
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, WORLD.width, WORLD.height);
 
-    ctx.fillStyle = "#343741";
+    ctx.fillStyle = "#4c6971";
     ctx.fillRect(0, 300, WORLD.width, 350);
 
     for (const point of noisePoints) {
@@ -1367,7 +1442,12 @@
     roundRect(ctx, -obstacle.width / 2 + 5, -obstacle.length / 2 + 8, obstacle.width, obstacle.length, 17);
     ctx.fill();
 
-    ctx.fillStyle = obstacle.color;
+    ctx.fillStyle = "#29414b";
+    roundRect(ctx, -obstacle.width / 2 + 3, -obstacle.length / 2 + 12, obstacle.width, obstacle.length, 16);
+    ctx.fill();
+    const paint = ctx.createLinearGradient(-obstacle.width / 2, 0, obstacle.width / 2, 0);
+    paint.addColorStop(0, obstacle.color); paint.addColorStop(0.45, "#d1e0e5"); paint.addColorStop(1, obstacle.color);
+    ctx.fillStyle = paint;
     roundRect(ctx, -obstacle.width / 2, -obstacle.length / 2, obstacle.width, obstacle.length, 16);
     ctx.fill();
 
@@ -1436,8 +1516,12 @@
     ctx.restore();
 
     ctx.save();
-    ctx.translate(car.x, car.y);
+    const bounce = visual.impact > 0 ? Math.sin(visual.impact * 18) * visual.impact * 5 : 0;
+    ctx.translate(car.x, car.y - Math.abs(bounce));
     ctx.rotate(car.angle);
+    ctx.fillStyle = "#996020";
+    roundRect(ctx, -CAR_SPEC.width / 2 + 2, -CAR_SPEC.length / 2 + 11, CAR_SPEC.width, CAR_SPEC.length, 14);
+    ctx.fill();
 
     drawWheel(-CAR_SPEC.width / 2 - 1, -CAR_SPEC.length / 2 + 20, car.steer);
     drawWheel(CAR_SPEC.width / 2 + 1, -CAR_SPEC.length / 2 + 20, car.steer);
@@ -1452,7 +1536,9 @@
     roundRect(ctx, -CAR_SPEC.width / 2, -CAR_SPEC.length / 2, CAR_SPEC.width, CAR_SPEC.length, 14);
     ctx.fill();
 
-    ctx.fillStyle = "rgba(21,27,36,0.9)";
+    const glass = ctx.createLinearGradient(-16, -25, 16, 30);
+    glass.addColorStop(0, "#a1e4e8"); glass.addColorStop(.4, "#446b7b"); glass.addColorStop(1, "#172d41");
+    ctx.fillStyle = glass;
     roundRect(ctx, -CAR_SPEC.width / 2 + 7, -CAR_SPEC.length / 2 + 18, CAR_SPEC.width - 14, 27, 7);
     ctx.fill();
     roundRect(ctx, -CAR_SPEC.width / 2 + 7, 5, CAR_SPEC.width - 14, 28, 7);
@@ -1516,6 +1602,27 @@
     ctx.fillStyle = "#15171c";
     roundRect(ctx, -4, -10, 8, 20, 3);
     ctx.fill();
+    ctx.restore();
+  }
+
+  function drawImpact() {
+    if (visual.impact <= 0) return;
+    const age = 1.7 - visual.impact;
+    ctx.save();
+    ctx.translate(visual.impactX, visual.impactY);
+    ctx.globalAlpha = clamp(visual.impact / 1.1, 0, 1);
+    ctx.strokeStyle = "#ffe29c";
+    ctx.lineWidth = 7;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 25 + age * 75, 18 + age * 45, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    for (let i = 0; i < 7; i += 1) {
+      const a = i / 7 * Math.PI * 2;
+      ctx.fillStyle = i % 2 ? "#ffae56" : "#d3dde0";
+      ctx.beginPath();
+      ctx.arc(Math.cos(a) * age * 48, Math.sin(a) * age * 30 - age * 35, 14 + age * 13, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.restore();
   }
 
@@ -1584,7 +1691,20 @@
     dom.commandInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && !event.isComposing) submitCommand(dom.commandInput.value);
     });
-    dom.micButton.addEventListener("click", toggleListening);
+    document.getElementById("demoPause").addEventListener("click", () => setDemoPaused(!demoPaused));
+    window.addEventListener("resize", setupCanvas);
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && game.demo) setDemoPaused(true);
+    });
+    dom.micButton.addEventListener("pointerdown", beginVoiceHold);
+    dom.micButton.addEventListener("pointerup", endVoiceHold);
+    dom.micButton.addEventListener("pointercancel", cancelVoiceHold);
+    dom.micButton.addEventListener("keydown", (event) => {
+      if ((event.key === " " || event.key === "Enter") && !event.repeat) { event.preventDefault(); beginVoiceHold(); }
+    });
+    dom.micButton.addEventListener("keyup", (event) => {
+      if (event.key === " " || event.key === "Enter") { event.preventDefault(); endVoiceHold(); }
+    });
     dom.clearLogButton.addEventListener("click", clearLog);
     dom.resetButton.addEventListener("click", () => {
       if (game.listening && speechRecognition) speechRecognition.stop();
@@ -1644,6 +1764,15 @@
   function init() {
     setupCanvas();
     bindEvents();
+    const notice = document.getElementById("browserNotice");
+    if (/xiaohongshu|rednote/i.test(navigator.userAgent)) {
+      notice.hidden = false;
+      notice.textContent = "在小红书里也能用文字和快捷指令玩。若麦克风不可用，请复制链接到 Safari / Chrome 打开。";
+    } else if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
+      notice.hidden = false;
+      notice.textContent = "此浏览器暂不支持语音识别，可用文字或下方快捷指令继续玩。";
+    }
+    if (location.hostname.endsWith("github.io")) document.querySelector(".ai-mode-row").hidden = true;
     initSpeechRecognition();
     initVoices();
     resetGame({ silent: true });
@@ -1673,7 +1802,7 @@
         score: currentScore(),
       },
       screen: document.body.dataset.screen,
-      demo: { active: game.demo, phase: game.demoPhase },
+      demo: { active: game.demo, phase: game.demoPhase, paused: demoPaused, sceneElapsed: demoSceneElapsed },
       parking: {
         inside: isCarFullyInTarget(),
         aligned: isVerticallyAligned(),
@@ -1723,6 +1852,7 @@
     parse: parseLocalCommand,
     navigate,
     demoStep: updateDemo,
+    pauseDemo: setDemoPaused,
   };
 
   init();
