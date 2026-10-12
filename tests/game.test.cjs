@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 // Exercise game state with a minimal browser adapter; real device tests are separate.
-function loadGame({ width = 390, recognition = false, fetch } = {}) {
+function loadGame({ width = 390, recognition = false, fetch, parkingSpeech } = {}) {
   const noop = () => {};
   const elements = new Map();
   const utterances = [];
@@ -77,8 +77,10 @@ function loadGame({ width = 390, recognition = false, fetch } = {}) {
       const onend = this.onend;
       setTimeout(() => onend?.(), 0);
     }
-    result(text, { final = false, index = 0, prior = [] } = {}) {
-      const result = Object.assign([{ transcript: text }], { isFinal: final });
+    result(text, { final = false, index = 0, prior = [], confidence = 0.7, alternatives = [] } = {}) {
+      const result = Object.assign([{ transcript: text, confidence }, ...alternatives.map(alternative => (
+        typeof alternative === 'string' ? { transcript: alternative, confidence: 0.5 } : alternative
+      ))], { isFinal: final });
       this.onresult?.({ resultIndex: index, results: [...prior, result] });
       return result;
     }
@@ -94,7 +96,8 @@ function loadGame({ width = 390, recognition = false, fetch } = {}) {
       getElementById: element, querySelectorAll: () => [],
       querySelector: selector => element(selector), createElement: () => makeElement() },
     window: { innerWidth: width, devicePixelRatio: 1, addEventListener: noop, setTimeout,
-      clearTimeout: id => timers.delete(id), speechSynthesis: synth, ...(recognition ? { SpeechRecognition: Recognition } : {}) },
+      clearTimeout: id => timers.delete(id), speechSynthesis: synth, ...(recognition ? { SpeechRecognition: Recognition } : {}),
+      ...(parkingSpeech ? { ParkingSpeech: parkingSpeech } : {}) },
     requestAnimationFrame: noop };
   vm.createContext(sandbox);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'game.js'), 'utf8'), sandbox);
@@ -166,6 +169,123 @@ function startVoice(options = {}) {
   game.advanceTimers();
   return game;
 }
+
+test('either head-first driving or tail-first reversing into the bay succeeds after a spoken stop', () => {
+  for (const { angleDegrees, command, sign } of [
+    { angleDegrees: 0, command: '前进', sign: 1 },
+    { angleDegrees: 180, command: '倒车', sign: -1 },
+  ]) {
+    const { debug, recognizer } = startVoice();
+    debug.setPracticePose({ x: 730, y: 360, angleDegrees });
+    assert.equal(debug.snapshot().parking.inside, false, 'the car must start outside the bay');
+    const moving = recognizer.result(command, { final: true });
+    debug.advance(8, () => debug.snapshot().car.y <= 180);
+    const entered = debug.snapshot();
+    assert.ok(entered.car.y < 360, 'normal game physics must carry the car through the bay entrance');
+    assert.ok(entered.car.speed * sign > 0, 'the intended gear must actually move the car');
+    assert.ok(entered.game.elapsed > 3);
+    assert.equal(entered.game.crashes, 0);
+    assert.equal(entered.parking.inside, true);
+    assert.equal(entered.parking.aligned, true);
+    assert.equal(entered.game.finished, false, 'entering while moving must not complete the round');
+
+    recognizer.result('停', { index: 1, prior: [moving] });
+    assert.equal(debug.snapshot().car.speed, 0);
+    debug.advance(0.1);
+    const parked = debug.snapshot();
+    assert.equal(parked.game.finished, true, `${command} into the bay must count`);
+    assert.equal(parked.game.failed, false);
+    assert.equal(parked.parking.inside, true);
+    assert.equal(parked.parking.aligned, true);
+  }
+});
+
+test('stopping with either end still outside the bay does not complete the round', () => {
+  for (const { angleDegrees, command } of [
+    { angleDegrees: 0, command: '前进' },
+    { angleDegrees: 180, command: '倒车' },
+  ]) {
+    const { debug, recognizer } = startVoice();
+    debug.setPracticePose({ x: 730, y: 360, angleDegrees });
+    const moving = recognizer.result(command, { final: true });
+    debug.advance(8, () => debug.snapshot().car.y <= 260);
+    assert.ok(Math.abs(debug.snapshot().car.speed) > 0);
+    assert.equal(debug.snapshot().parking.inside, false);
+    recognizer.result('停', { index: 1, prior: [moving] });
+    debug.advance(2);
+    const partial = debug.snapshot();
+    assert.ok(partial.game.elapsed > 3);
+    assert.equal(partial.car.speed, 0);
+    assert.equal(partial.parking.inside, false);
+    assert.equal(partial.game.finished, false);
+  }
+});
+
+test('a lateral near miss or a fully inside but crooked car cannot win by stopping', () => {
+  for (const { pose, inside, aligned } of [
+    { pose: { x: 699, y: 163, angleDegrees: 0 }, inside: false, aligned: true },
+    { pose: { x: 730, y: 163, angleDegrees: 15 }, inside: true, aligned: false },
+  ]) {
+    const { debug, recognizer } = startVoice();
+    debug.setPracticePose(pose);
+    const moving = recognizer.result('前进', { final: true });
+    debug.advance(0.25);
+    assert.ok(debug.snapshot().car.speed > 0);
+    recognizer.result('停', { index: 1, prior: [moving] });
+    debug.advance(4);
+    const missed = debug.snapshot();
+    assert.ok(missed.game.elapsed > 3);
+    assert.equal(missed.parking.inside, inside);
+    assert.equal(missed.parking.aligned, aligned);
+    assert.equal(missed.game.finished, false);
+  }
+});
+
+test('single-character reverse and stop work on interim speech without release', () => {
+  const { debug, recognizer } = startVoice();
+  const reverse = recognizer.result('倒');
+  assert.ok(debug.snapshot().car.targetSpeed < 0);
+  debug.advance(0.25);
+  assert.ok(debug.snapshot().car.speed < 0);
+  recognizer.result('停', { index: 1, prior: [reverse] });
+  assert.equal(debug.snapshot().car.targetSpeed, 0);
+  assert.equal(debug.snapshot().car.speed, 0);
+  assert.equal(debug.snapshot().voice.enabled, true);
+  assert.equal(recognizer.active, true);
+});
+
+test('repeated short words do not replay actions, while a later short reverse resumes after stop', () => {
+  const { debug, recognizer, userLogs } = startVoice();
+  recognizer.result('倒');
+  recognizer.result('倒倒倒');
+  recognizer.result('倒倒倒', { final: true });
+  assert.ok(debug.snapshot().car.targetSpeed < 0);
+  assert.equal(userLogs().length, 1);
+  recognizer.result('倒倒倒停停停');
+  assert.equal(debug.snapshot().car.targetSpeed, 0);
+  assert.equal(userLogs().length, 2);
+  recognizer.result('倒倒倒停停停', { final: true });
+  assert.equal(userLogs().length, 2);
+  recognizer.result('倒倒倒停停停倒');
+  assert.ok(debug.snapshot().car.targetSpeed < 0);
+  assert.equal(userLogs().length, 3);
+});
+
+test('negated reverse and ordinary mentions containing short words are not voice commands', () => {
+  for (const text of ['不要倒', '别倒', '不用倒车', '倒霉', '倒计时', '停车场', '我在停车场', '暂停音乐']) {
+    const { debug, recognizer, userLogs } = startVoice();
+    recognizer.result(text, { final: true });
+    assert.equal(debug.snapshot().car.targetSpeed, 0, text);
+    assert.equal(debug.snapshot().game.commandCount, 0, text);
+    assert.equal(userLogs().length, 0, text);
+  }
+  const { debug, recognizer } = startVoice();
+  const reverse = recognizer.result('倒车', { final: true });
+  for (const text of ['不要停', '别停车', '不停']) {
+    recognizer.result(text, { final: true, index: 1, prior: [reverse] });
+    assert.ok(debug.snapshot().car.targetSpeed < 0, text);
+  }
+});
 
 test('interim voice immediately reverses without waiting for release or final recognition', () => {
   const { debug, recognizer, userLogs } = startVoice();
@@ -519,4 +639,169 @@ test('both crashes stop at first contact at every playback speed and coarse fram
       assert.equal(debug.snapshot().parking.inside, true);
     }
   }
+});
+
+async function flushPromises() {
+  for (let i = 0; i < 8; i += 1) await Promise.resolve();
+}
+
+function localVoiceFixture({ pending = false } = {}) {
+  const sessions = [];
+  const engine = {
+    isSupported: () => true,
+    start(options) {
+      const handle = { stops: 0, stop() { this.stops += 1; } };
+      const session = { options, handle, resolve: null };
+      sessions.push(session);
+      if (pending) return new Promise(resolve => { session.resolve = () => resolve(handle); });
+      return Promise.resolve(handle);
+    },
+  };
+  const game = loadGame({ recognition: true, parkingSpeech: engine });
+  game.debug.navigate('practice');
+  game.element('difficultySelect').value = '0';
+  game.element('voiceEngine').value = 'local';
+  game.element('micButton').listeners.click();
+  return { game, sessions };
+}
+
+test('the local speech engine executes short and spaced Chinese commands in one open session', async () => {
+  const { game, sessions } = localVoiceFixture();
+  await flushPromises();
+  assert.equal(sessions.length, 1);
+  assert.equal(game.recognizers.length, 0, 'selecting local recognition must not start browser recognition');
+  const { options, handle } = sessions[0];
+  assert.equal(game.debug.snapshot().voice.enabled, true);
+  assert.equal(game.debug.snapshot().game.listening, true);
+  assert.equal(options.signal.aborted, false);
+  options.onText('倒', { final: false, id: 0, confidence: 0.92 });
+  game.debug.advance(0.25);
+  assert.ok(game.debug.snapshot().car.speed < 0);
+  options.onText('停', { final: false, id: 1, confidence: 0.95 });
+  assert.equal(game.debug.snapshot().car.speed, 0);
+  assert.equal(game.debug.snapshot().car.targetSpeed, 0);
+  options.onText('前 进', { final: false, id: 2, confidence: 0.9 });
+  assert.ok(game.debug.snapshot().car.targetSpeed > 0);
+  game.debug.advance(0.25);
+  assert.ok(game.debug.snapshot().car.speed > 0);
+  assert.equal(sessions.length, 1);
+  assert.equal(handle.stops, 0);
+  assert.equal(game.debug.snapshot().voice.enabled, true);
+
+  game.element('endVoiceButton').listeners.click();
+  assert.equal(options.signal.aborted, true);
+  assert.equal(handle.stops, 1);
+  assert.equal(game.debug.snapshot().car.speed, 0);
+  assert.equal(game.debug.snapshot().voice.enabled, false);
+  options.onText('倒', { final: true, id: 3, confidence: 0.96 });
+  assert.equal(game.debug.snapshot().car.targetSpeed, 0, 'late local text after End must not move the car');
+});
+
+test('ending local voice while its model is loading aborts readiness and disposes a late handle', async () => {
+  const { game, sessions } = localVoiceFixture({ pending: true });
+  assert.equal(sessions.length, 1);
+  const { options, handle, resolve } = sessions[0];
+  assert.equal(options.signal.aborted, false);
+  game.element('endVoiceButton').listeners.click();
+  assert.equal(options.signal.aborted, true);
+  options.onText('倒', { final: true, id: 0, confidence: 0.98 });
+  assert.equal(game.debug.snapshot().car.targetSpeed, 0);
+  resolve();
+  await flushPromises();
+  assert.equal(handle.stops, 1, 'a model that resolves after cancellation must release its microphone');
+  assert.equal(game.debug.snapshot().voice.enabled, false);
+  assert.equal(game.debug.snapshot().game.listening, false);
+  assert.equal(game.debug.snapshot().car.targetSpeed, 0);
+  assert.equal(game.recognizers.length, 0);
+});
+
+test('a local speech error brakes and offers browser fallback without switching microphone services', async () => {
+  const { game, sessions } = localVoiceFixture();
+  await flushPromises();
+  const { options } = sessions[0];
+  options.onText('倒', { final: false, id: 0, confidence: 0.9 });
+  game.debug.advance(0.25);
+  assert.ok(game.debug.snapshot().car.speed < 0);
+  options.onError(new Error('Local recognizer could not continue'));
+  assert.equal(game.debug.snapshot().car.speed, 0);
+  assert.equal(game.debug.snapshot().car.targetSpeed, 0);
+  assert.equal(game.debug.snapshot().voice.enabled, false);
+  assert.equal(options.signal.aborted, true);
+  assert.equal(game.element('voiceEngine').value, 'local');
+  assert.equal(game.recognizers.length, 0, 'an error must not silently switch to another microphone service');
+  const hint = game.element('voiceTranscript').textContent + game.element('toast').textContent;
+  assert.match(hint, /浏览器|文字|快捷指令/);
+  options.onText('前进', { final: true, id: 1, confidence: 0.99 });
+  assert.equal(game.debug.snapshot().car.targetSpeed, 0);
+});
+
+test('navigation, reset, hidden page, and round finish also cancel the local microphone session', async () => {
+  for (const exit of ['navigation', 'reset', 'hidden', 'finish']) {
+    const { game, sessions } = localVoiceFixture();
+    await flushPromises();
+    const { options, handle } = sessions[0];
+    options.onText('倒', { final: true, id: 0, confidence: 0.9 });
+    if (exit === 'navigation') game.debug.navigate('home');
+    if (exit === 'reset') game.element('resetButton').listeners.click();
+    if (exit === 'hidden') {
+      game.document.hidden = true;
+      game.documentListeners.visibilitychange();
+    }
+    if (exit === 'finish') game.debug.autopark();
+    assert.equal(options.signal.aborted, true, exit);
+    assert.equal(handle.stops, 1, exit);
+    assert.equal(game.debug.snapshot().car.targetSpeed, 0, exit);
+    assert.equal(game.debug.snapshot().voice.enabled, false, exit);
+    options.onText('前进', { final: true, id: 1, confidence: 0.98 });
+    assert.equal(game.debug.snapshot().car.targetSpeed, 0, `${exit} must ignore late local recognition`);
+  }
+});
+
+test('browser recognition can recover an understood command from alternative hypotheses without replaying it', () => {
+  const { debug, recognizer, userLogs } = startVoice();
+  assert.ok(recognizer.maxAlternatives > 1);
+  const reverse = recognizer.result('道', { alternatives: ['倒'] });
+  assert.ok(debug.snapshot().car.targetSpeed < 0);
+  assert.equal(userLogs().length, 1);
+  recognizer.result('道', { alternatives: ['倒'], final: true });
+  assert.equal(userLogs().length, 1, 'repeated alternative command must not be replayed');
+  debug.advance(0.25);
+  assert.ok(debug.snapshot().car.speed < 0);
+  recognizer.result('挺', { index: 1, prior: [reverse], alternatives: ['停'] });
+  assert.equal(debug.snapshot().car.speed, 0);
+  assert.equal(debug.snapshot().car.targetSpeed, 0);
+  assert.equal(userLogs().length, 2);
+});
+
+test('alternative hypotheses cannot override an explicit negation in the primary transcript', () => {
+  const { debug, recognizer, userLogs } = startVoice();
+  recognizer.result('不要倒', { final: true, alternatives: ['倒'] });
+  assert.equal(debug.snapshot().car.targetSpeed, 0);
+  assert.equal(debug.snapshot().game.commandCount, 0);
+  assert.equal(userLogs().length, 0);
+});
+
+test('an unknown-word token in local speech cannot be promoted to a short driving command', async () => {
+  const { game, sessions } = localVoiceFixture();
+  await flushPromises();
+  sessions[0].options.onText('[unk]倒', { final: true, id: 0, confidence: 0.9 });
+  assert.equal(game.debug.snapshot().car.targetSpeed, 0);
+  assert.equal(game.debug.snapshot().game.commandCount, 0);
+  assert.equal(game.userLogs().length, 0);
+});
+
+
+test('unknown filler does not swallow a clear stop, while a negated stop is still ignored', async () => {
+  const { game, sessions } = localVoiceFixture();
+  await flushPromises();
+  const { options } = sessions[0];
+  options.onText('倒', { final: false, id: 0 });
+  game.debug.advance(0.25);
+  assert.ok(game.debug.snapshot().car.speed < 0);
+  options.onText('不要 停 [unk]', { final: false, id: 1 });
+  assert.ok(game.debug.snapshot().car.targetSpeed < 0);
+  options.onText('停 [unk]', { final: false, id: 2 });
+  assert.equal(game.debug.snapshot().car.speed, 0);
+  assert.equal(game.debug.snapshot().car.targetSpeed, 0);
+  assert.equal(game.debug.snapshot().voice.enabled, true);
 });

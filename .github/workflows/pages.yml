@@ -21,13 +21,16 @@ jobs:
       - name: Verify game behavior
         run: |
           node --check game.js
-          node --test tests/game.test.cjs
+          node --check voice-recognition.js
+          node --check voice-audio-worklet.js
+          node --test tests/*.test.cjs
       - uses: actions/configure-pages@v5
       - name: Package browser files only
         run: |
           mkdir -p _site
-          cp index.html game.js styles.css ai-driving-school.html product-demo.html _site/
+          cp index.html game.js styles.css voice-recognition.js voice-audio-worklet.js ai-driving-school.html product-demo.html _site/
           cp -R media _site/
+          cp -R vendor models _site/
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site

@@ -1,0 +1,3 @@
+
+# Preserve the upstream WebAssembly bundle verbatim.
+vendor/vosk.js -text -diff

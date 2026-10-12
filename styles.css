@@ -822,6 +822,10 @@ body:not([data-screen="demo"]) .stage-dialogue-coach { display:none; }
 .voice-session-heading { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px; }
 .voice-session-heading strong { font-size:12px; color:#567655; }
 .voice-session-heading span { font-size:11px; color:#80906f; }
+.voice-engine-row { display:flex; align-items:center; gap:10px; font-size:12px; color:#657c58; }
+.voice-engine-row select { flex:1; min-width:0; padding:8px 10px; border:1px solid #d2ddc4; border-radius:10px; color:#52694d; background:#fffef6; font:inherit; }
+.voice-engine-note { margin:8px 0 12px; font-size:11px; line-height:1.6; color:#7f8c70; }
+.parking-rule-note { color:#697b5e; font-size:12px; line-height:1.7; }
 .voice-session-actions { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:stretch; }
 .voice-session-panel .mic-button { min-height:58px; grid-template-columns:36px minmax(0,1fr) auto; gap:8px; padding:8px 11px; }
 .voice-session-panel .mic-icon { width:34px; height:34px; }

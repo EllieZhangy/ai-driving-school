@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#fff6e7" />
   <meta name="description" content="AI驾校：只能用语音或文字指挥AI学员完成倒车入库。" />
   <title>AI驾校｜用语音辅导 AI 学员停车</title>
-  <link rel="stylesheet" href="styles.css?v=20261012-teaching-ui" />
+  <link rel="stylesheet" href="styles.css?v=20261012-short-voice" />
 </head>
 <body>
   <div class="ambient ambient-a" aria-hidden="true"></div>
@@ -31,8 +31,8 @@
     </header>
 
     <section id="homeScreen" class="home-screen">
-      <div class="home-hero"><div class="hero-art" aria-hidden="true"><span class="hero-tree tree-left">♣</span><span class="hero-tree tree-right">♣</span><span class="hero-flower flower-left">✿</span><span class="hero-flower flower-right">✿</span><span class="hero-cloud">☁</span><div class="hero-bay">P</div><div class="hero-car"><span>AI</span></div><span class="hero-boom">哎呀！</span><div class="hero-cone">▲</div></div><div class="hero-copy"><span class="section-kicker">小满的驾校日记 · 第一课</span><h2>你发出指令，<br>AI 负责执行。</h2><p>坐在副驾驶，用语音辅导嘴硬、紧张、偶尔迷糊的 AI 学员倒车入库。车停进去了，你的耐心还在吗？</p><button class="primary-button" data-route="demo">▶ 先看爆笑 Demo</button><span class="hero-caption">约 50 秒 · 看 AI 嘴硬，等你指挥</span></div></div>
-      <div class="level-card"><span class="level-sticker" aria-hidden="true">🌷</span><span class="level-number">01</span><div><span class="section-kicker">新手教练 · 开放练习</span><h3>小满的第一堂停车课</h3><p>把车完整倒进绿色车位，再喊一声“停车”。<br>操作交给 AI，判断交给你。</p></div><div class="level-actions"><button class="primary-button" data-route="practice">自己尝试 →</button></div></div>
+      <div class="home-hero"><div class="hero-art" aria-hidden="true"><span class="hero-tree tree-left">♣</span><span class="hero-tree tree-right">♣</span><span class="hero-flower flower-left">✿</span><span class="hero-flower flower-right">✿</span><span class="hero-cloud">☁</span><div class="hero-bay">P</div><div class="hero-car"><span>AI</span></div><span class="hero-boom">哎呀！</span><div class="hero-cone">▲</div></div><div class="hero-copy"><span class="section-kicker">小满的驾校日记 · 第一课</span><h2>你发出指令，<br>AI 负责执行。</h2><p>坐在副驾驶，用语音辅导嘴硬、紧张、偶尔迷糊的 AI 学员停车入位。车停进去了，你的耐心还在吗？</p><button class="primary-button" data-route="demo">▶ 先看爆笑 Demo</button><span class="hero-caption">约 50 秒 · 看 AI 嘴硬，等你指挥</span></div></div>
+      <div class="level-card"><span class="level-sticker" aria-hidden="true">🌷</span><span class="level-number">01</span><div><span class="section-kicker">新手教练 · 开放练习</span><h3>小满的第一堂停车课</h3><p>开进或倒进绿色车位，停稳就算通关。<br>操作交给 AI，判断交给你。</p></div><div class="level-actions"><button class="primary-button" data-route="practice">自己尝试 →</button></div></div>
       <p class="home-note">手机直接玩 · 无需注册 · 娱乐游戏，不用于实际驾驶教学</p>
     </section>
     <div id="levelScreen" hidden>
@@ -66,7 +66,7 @@
         <div class="stage-head">
           <div>
             <span class="section-kicker">科目二 · 第一关</span>
-            <h2>右侧倒车入库</h2>
+            <h2>右侧停车入位</h2>
           </div>
           <div class="difficulty-wrap">
             <label for="difficultySelect">误听概率</label>
@@ -79,10 +79,10 @@
         </div>
 
         <div id="canvasWrap" class="canvas-wrap">
-          <canvas id="gameCanvas" width="1100" height="700" aria-label="倒车入库游戏画面"></canvas>
+          <canvas id="gameCanvas" width="1100" height="700" aria-label="停车入位游戏画面"></canvas>
           <div class="objective-pill">
             <span class="objective-dot"></span>
-            目标：完整停进绿色车位并刹停
+            目标：开进或倒进绿色车位，并停稳
           </div>
           <div id="stageCoachBubble" class="stage-dialogue stage-dialogue-coach">
             <strong class="dialogue-speaker"><span aria-hidden="true">↗</span> 指挥者</strong>
@@ -98,6 +98,13 @@
 
         <div class="voice-session-panel" aria-label="连续语音指挥">
           <div class="voice-session-heading"><strong>连续语音指挥</strong><span>一次开启，全程听你</span></div>
+          <label class="voice-engine-row">识别方式
+            <select id="voiceEngine" aria-label="语音识别方式">
+              <option value="local" selected>增强中文识别（推荐）</option>
+              <option value="browser">浏览器识别（备用）</option>
+            </select>
+          </label>
+          <p id="voiceEngineNote" class="voice-engine-note">首次加载约 42 MB，准备好后直接说“倒”或“停”；声音在本机处理。</p>
           <div class="voice-session-actions">
             <button id="micButton" class="mic-button" type="button" aria-pressed="false" aria-describedby="voiceTranscript">
               <span class="mic-icon" aria-hidden="true">●</span>
@@ -200,6 +207,7 @@
       <button class="modal-close" type="button" data-close-modal="help" aria-label="关闭">×</button>
       <span class="section-kicker">HOW TO PLAY</span>
       <h2 id="helpTitle">你不能碰方向盘，只能发指令。</h2>
+      <p class="parking-rule-note">开进或倒进都算成功：车身完整进入绿色车位、摆正并停稳即可。车上的箭头指向车头，红色灯条是车尾。</p>
       <div class="help-steps">
         <div><b>MIC</b><p><strong>点“开始教学”一次就够</strong><span>小满会一直听你指挥。车在倒车时直接说“停”，无需再按按钮；想收工时点“结束教学”。</span></p></div>
         <div><b>01</b><p><strong>先说挡位和方向</strong><span>例如“挂倒挡，方向盘向左打死，慢慢倒”。</span></p></div>
@@ -235,6 +243,7 @@
     </section>
   </div>
 
-  <script src="game.js?v=20261012-teaching-ui"></script>
+  <script src="voice-recognition.js?v=20261012-short-voice"></script>
+  <script src="game.js?v=20261012-short-voice"></script>
 </body>
 </html>

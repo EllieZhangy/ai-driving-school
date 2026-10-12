@@ -5,8 +5,9 @@ Date: 2026-10-12
 ## Completed checks
 
 - JavaScript syntax checks for the game and server.
-- Twenty-five automated behavioral tests using a minimal browser adapter: mobile/desktop setup; exactly two demo collisions and successful final parking; clean practice reset and physics parking success; playback timing independent of narration rate; pause/resume; speech completion gating and replay; live interim commands and steering refinements; duplicate/final transcript handling, correction reversals, and punctuation/filler edits; immediate stop of a physically moving car while the same listener remains active; separate start/end controls; silent student bubbles and coach-only Demo narration; later command recovery; continuous restarts with braking; startup cancellation; recognition errors; lifecycle teardown; caption-only feedback; stale model-response rejection; sudden wall-approach acceleration; first-contact stopping at 0.75x/1x/1.25x with 16/250/1000 ms frame intervals.
-- Desktop and 390 x 844 CSS-pixel previews in the Codex in-app browser: descriptive product header, one home Demo entry, Start/End teaching labels, white parking guidance, portrait home layout, level entry, candy-colored UI, angled parking scene, garden props, playback selector, captions, and progress controls. This is a desktop browser viewport check, not an iPhone hardware test.
+- Fifty-one automated behavioral tests using a minimal browser adapter: mobile/desktop setup; head-first and tail-first entry followed by a spoken stop; partial/offset/crooked parking rejection; single-character and repeated short commands; clear stops preserved despite unknown filler; Chinese token spacing; alternative hypotheses with negation protection; local recognizer integration and late-event cancellation; model/library timeout cleanup and cache retry; microphone/audio interruption and AudioWorklet batching; exactly two demo collisions and successful final parking; clean practice reset and physics parking success; playback timing independent of narration rate; pause/resume; speech completion gating and replay; live interim commands and steering refinements; duplicate/final transcript handling, correction reversals, and punctuation/filler edits; immediate stop of a physically moving car while the same listener remains active; separate start/end controls; silent student bubbles and coach-only Demo narration; later command recovery; continuous restarts with braking; startup cancellation; recognition errors; lifecycle teardown; caption-only feedback; stale model-response rejection; sudden wall-approach acceleration; first-contact stopping at 0.75x/1x/1.25x with 16/250/1000 ms frame intervals.
+- Desktop and 390 x 844 CSS-pixel previews in the Codex in-app browser: descriptive product header, one home Demo entry, Start/End teaching labels, white parking guidance, explicit car front/rear labels and hood arrow, local/browser recognition selector, portrait home layout, level entry, candy-colored UI, angled parking scene, garden props, playback selector, captions, and progress controls. This is a desktop browser viewport check, not an iPhone hardware test.
+- The actual self-hosted Chinese WebAssembly model was loaded in the Codex in-app browser and decoded locally generated 16 kHz Chinese sound fixtures for “倒”, “停”, and “不要倒” using the shipped command vocabulary. All three were recognized; negative audio produced no isolated reverse-command partial. This checks the real acoustic engine without opening a microphone. The temporary fixtures and test page are not deployed.
 - Public Pages deployment is verified separately through its workflow result and HTTP response.
 
 ## Product film checks
@@ -18,14 +19,15 @@ Date: 2026-10-12
 
 ## Not yet verified on physical devices
 
-- iPhone Safari: microphone permissions, continuous/interim recognition timing and separate start/end controls, Chinese voice availability, audio resume, performance, keyboard, and result modal.
+- iPhone Safari: microphone permissions, local WebAssembly memory/CPU and AudioWorklet support, continuous/interim recognition timing and separate start/end controls, Chinese voice availability, audio resume, performance, keyboard, and result modal.
 - Android Chrome: recognition availability, provider network access, touch events, and performance.
 - Xiaohongshu iOS and Android webviews: actual link entry, microphone support, voice availability, and handoff to an external browser.
 
 ## Known limits
 
 - No approved Xiaohongshu mini program is included.
-- Real-time execution begins when the browser supplies an interim recognition result; provider/network latency cannot be eliminated by this frontend.
+- Execution begins when the selected recognizer supplies partial text. Acoustic accuracy with a user microphone, room noise, and individual accents has not been measured; fixture recognition does not establish universal accuracy.
+- Local recognition first downloads approximately 42 MiB of Chinese model data plus the library and needs browser memory/CPU. Browser recognition is an explicit fallback; there is no automatic service switch.
 - Browser speech APIs may be missing or fail in app webviews. Text and command chips are the supported fallback.
 - Browser-provided narration may be silent when no suitable voice is installed or audio playback is restricted; subtitles remain visible.
 - GitHub Pages is static; it does not host the optional model API.

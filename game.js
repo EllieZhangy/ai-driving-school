@@ -130,7 +130,7 @@
   };
 
   let speechRecognition = null;
-  const voice = { enabled: false, pending: false, session: 0, restartTimer: null, rapidEnds: 0, lastFingerprint: "" };
+  const voice = { enabled: false, pending: false, session: 0, restartTimer: null, rapidEnds: 0, lastFingerprint: "", localController: null, localAbort: null };
   let availableVoices = [];
 
   function toRad(degrees) {
@@ -377,12 +377,25 @@
     modal.setAttribute("aria-hidden", "true");
   }
 
-  function parseLocalCommand(rawText) {
-    const text = rawText
+  function normalizeCommandText(rawText) {
+    return String(rawText)
       .toLowerCase()
       .replace(/[，。！？、,.!?]/g, " ")
+      .replace(/([\u4e00-\u9fff])\s+(?=[\u4e00-\u9fff])/g, "$1")
       .replace(/\s+/g, " ")
       .trim();
+  }
+
+  function actionableCommandText(rawText) {
+    // Mask negations and ordinary nouns before interpreting single-word commands.
+    return normalizeCommandText(rawText)
+      .replace(/(?:不要|不用|别|不能|不许|不想|不是|不)(?:再|继续)?(?:倒车|倒|往后倒|向后倒|往后退|后退|退后|退|前进|往前开|往前走|左转|右转|左打死|右打死|向左|向右|左|右|慢|走)/g, match => " ".repeat(match.length))
+      .replace(/倒霉|倒计时|倒数|倒影|摔倒|颠倒|打倒|停车场|暂停音乐|停止音乐|停电|停课/g, match => " ".repeat(match.length))
+      .replace(/不要(?:停车|停|刹车)|不用(?:停车|停|刹车)|别(?:停车|停|踩刹车|刹车)|不踩刹车|不停/g, match => " ".repeat(match.length));
+  }
+
+  function parseLocalCommand(rawText) {
+    const text = actionableCommandText(rawText);
 
     const result = {
       understood: false,
@@ -403,9 +416,10 @@
     const stopText = text.replace(/不要(?:停车|停|刹车)|不用(?:停车|停|刹车)|别(?:停车|停|踩刹车|刹车)|不踩刹车|不停|停车场/g, " ");
     const stopMatch = /(停下|停车|刹车|别动|不要动|停住|踩刹车|立刻停|马上停|停)/.test(stopText);
     const parkMatch = /(挂p挡|挂p档|p挡|p档|驻车)/.test(text);
-    const reverseMatch = /(挂倒挡|挂倒档|倒挡|倒档|倒车|往后倒|向后倒|后退|往后退|退一点|退后)/.test(text);
-    const driveMatch = /(挂d挡|挂d档|d挡|d档|前进|往前开|向前开|往前走|往前一点|开过去|向前一点)/.test(text);
-    const continueMatch = /(继续|接着|别停|不要停|不停|保持|就这样|再来一点|再倒一点|再走一点)/.test(text);
+    const reverseMatch = /(挂倒挡|挂倒档|倒挡|倒档|倒车|往后倒|向后倒|后退|往后退|退一点|退后|倒+|退)/.test(text);
+    const driveMatch = /(挂d挡|挂d档|d挡|d档|前进|往前开|向前开|往前走|往前一点|开过去|向前一点|走)/.test(text);
+    const continueMatch = /(继续|接着|保持|就这样|再来一点|再倒一点|再走一点)/.test(text)
+      || /(别停|不要停|不停)/.test(normalizeCommandText(rawText));
 
     if (stopMatch) {
       result.stop = true;
@@ -439,15 +453,15 @@
       const latest = steeringEvents[steeringEvents.length - 1];
       result.steering = latest.steering;
       result.summary.push(latest.summary);
-    } else if (/(向左|往左|左转|打左)/.test(text)) {
+    } else if (/(向左|往左|左转|打左|左)/.test(text)) {
       result.steering = "left_slight";
       result.summary.push("向左一点");
-    } else if (/(向右|往右|右转|打右)/.test(text)) {
+    } else if (/(向右|往右|右转|打右|右)/.test(text)) {
       result.steering = "right_slight";
       result.summary.push("向右一点");
     }
 
-    if (/(慢慢|慢一点|慢点|缓缓|轻一点|别太快|龟速|稳一点|悠着点)/.test(text)) {
+    if (/(慢慢|慢一点|慢点|缓缓|轻一点|别太快|龟速|稳一点|悠着点|慢)/.test(text)) {
       result.speed = "slow";
       result.summary.push("慢速");
     } else if (/(快一点|快点|加速|踩油门|油门|冲|速度快)/.test(text)) {
@@ -744,13 +758,14 @@
 
   function initSpeechRecognition() {
     RecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!RecognitionClass) dom.micHint.textContent = "当前浏览器不支持，仍可打字玩";
+    if (!RecognitionClass && !window.ParkingSpeech?.isSupported()) dom.micHint.textContent = "当前浏览器不支持，仍可打字玩";
   }
 
   function updateVoiceButton(label) {
     dom.micButton.setAttribute("aria-pressed", String(voice.enabled));
     dom.micButton.disabled = voice.enabled;
     document.getElementById("endVoiceButton").disabled = !voice.enabled;
+    document.getElementById("voiceEngine").disabled = voice.enabled;
     dom.difficultySelect.disabled = voice.enabled;
     dom.micButton.classList[voice.enabled ? "add" : "remove"]("listening");
     dom.micButton.querySelector("strong").textContent = label || (voice.enabled ? "教学中 · 直接说指令" : "开始教学");
@@ -771,6 +786,10 @@
     voice.restartTimer = null;
     const recognition = speechRecognition;
     speechRecognition = null;
+    voice.localAbort?.abort();
+    voice.localAbort = null;
+    voice.localController?.stop();
+    voice.localController = null;
     game.listening = false;
     if (wasActive && brake) brakeForVoiceDisconnect();
     try { recognition?.abort(); } catch { /* A completed recognition session may already be closed. */ }
@@ -781,7 +800,15 @@
   function startLiveVoice() {
     if (voice.enabled) return;
     if (document.body.dataset.screen !== "practice" || game.finished) return;
-    if (!RecognitionClass) {
+    const wantsLocal = document.getElementById("voiceEngine").value === "local";
+    const local = wantsLocal && window.ParkingSpeech?.isSupported?.();
+    if (wantsLocal && !local) {
+      const message = "此浏览器无法启用增强中文识别，请切换“浏览器识别”或使用文字指令。";
+      document.getElementById("voiceTranscript").textContent = message;
+      showToast(message, "", 3500);
+      return;
+    }
+    if (!local && !RecognitionClass) {
       showToast("麦克风不可用：请使用文字或快捷指令", "", 3000);
       dom.commandInput.focus();
       return;
@@ -791,12 +818,77 @@
     voice.lastFingerprint = "";
     window.speechSynthesis?.cancel();
     document.getElementById("voiceTranscript").textContent = "正在准备语音教学。小满会一直听你指挥；倒车时直接说“停”，不用再点按钮。";
-    startLiveRecognition();
+    if (local) startLocalRecognition();
+    else startLiveRecognition();
   }
 
   function endLiveVoice() {
     stopLiveVoice();
     document.getElementById("voiceTranscript").textContent = "教学已结束，车辆已刹停。想继续指挥，再点“开始教学”就好。";
+  }
+
+  function dispatchLiveTranscript(rawText, { id, final }, processed) {
+    const text = normalizeCommandText(rawText);
+    document.getElementById("voiceTranscript").textContent = `听到：${text}`;
+    const hasUnknown = /\[unk\]/i.test(text);
+    const recognizedActions = extractLiveActions(text);
+    // Unclear filler must never swallow a clearly recognized brake command.
+    const actions = hasUnknown
+      ? recognizedActions.filter(action => action.type === "stop" || (action.type === "gear" && action.value === "P"))
+      : recognizedActions;
+    if (hasUnknown && !actions.length) {
+      if (final) document.getElementById("voiceTranscript").textContent = "没有听清，可以再说一次：倒、停、前进、左、右。";
+      return;
+    }
+    const seen = processed.get(id) || new Set();
+    const fresh = actions.filter((action, order) => !seen.has(`${order}:${action.type}:${action.value}`));
+    // Compare semantic order across revisions, including whitespace/tokenization changes.
+    processed.set(id, new Set(actions.map((action, order) => `${order}:${action.type}:${action.value}`)));
+    if (!fresh.length) {
+      if (final && !actions.length) document.getElementById("voiceTranscript").textContent = `听到：${text}。可直接说指令：“倒、停、前进、左、右、回正”。`;
+      return;
+    }
+    const stop = fresh.slice().reverse().find(action => action.type === "stop");
+    const selected = stop ? [stop] : [...new Map(fresh.map(action => [action.type, action])).values()];
+    const instruction = selected.map(action => action.text).join("，");
+    const parsed = parseLocalCommand(instruction);
+    if (!parsed.understood) return;
+    const fingerprint = JSON.stringify([parsed.stop, parsed.gear, parsed.steering, parsed.speed, parsed.move]);
+    if (fingerprint === voice.lastFingerprint && liveActionStillApplied(parsed)) return;
+    voice.lastFingerprint = fingerprint;
+    void submitCommand(instruction, { immediate: true, forceLocal: true, ignoreMishear: true, parsed });
+  }
+
+  function startLocalRecognition() {
+    const session = ++voice.session;
+    const current = () => voice.enabled && session === voice.session && !game.finished && document.body.dataset.screen === "practice";
+    const processed = new Map();
+    voice.pending = true;
+    voice.localAbort = new AbortController();
+    updateVoiceButton("正在准备中文识别…");
+    const fail = () => {
+      if (!current()) return;
+      stopLiveVoice();
+      const message = "中文识别暂不可用，已刹停。可切换“浏览器识别”，或使用文字指令。";
+      document.getElementById("voiceTranscript").textContent = message;
+      showToast(message, "danger", 3500);
+    };
+    window.ParkingSpeech.start({
+      signal: voice.localAbort.signal,
+      onStatus: status => { if (current()) document.getElementById("voiceTranscript").textContent = status; },
+      onText: (text, { final = false, id = 0 } = {}) => {
+        if (current()) dispatchLiveTranscript(text, { final, id }, processed);
+      },
+      onError: fail,
+    }).then(controller => {
+      if (!current()) { controller.stop(); return; }
+      voice.localController = controller;
+      voice.pending = false;
+      game.listening = true;
+      updateVoiceButton();
+      setBadge("中文短口令已就绪", "listening");
+      document.getElementById("voiceTranscript").textContent = "小满在听：可直接说“倒、停、前进、左、右、回正”。说“停”只停车，你可以继续指挥。";
+    }).catch(error => { if (error?.name !== "AbortError") fail(); });
   }
 
   function startLiveRecognition() {
@@ -811,7 +903,7 @@
     recognition.lang = "zh-CN";
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
+    recognition.maxAlternatives = 5;
     voice.pending = true;
     updateVoiceButton("教学准备中…");
     recognition.onstart = () => {
@@ -828,27 +920,11 @@
       voice.rapidEnds = 0;
       for (let index = event.resultIndex; index < event.results.length; index += 1) {
         const result = event.results[index];
-        const text = result[0].transcript.trim();
-        document.getElementById("voiceTranscript").textContent = `听到：${text}`;
-        const actions = extractLiveActions(text);
-        const seen = processed.get(index) || new Set();
-        const fresh = actions.filter((action, order) => !seen.has(`${order}:${action.type}:${action.value}`));
-        // Semantic order survives punctuation/filler edits; compare only the preceding revision.
-        processed.set(index, new Set(actions.map((action, order) => `${order}:${action.type}:${action.value}`)));
-        if (!fresh.length) {
-          if (result.isFinal && !actions.length) document.getElementById("voiceTranscript").textContent = `听到：${text}。可直接说“倒车、左转、回正、停车”。`;
-          continue;
-        }
-        // A new stop wins the current recognition update; old stop spans never block later speech.
-        const stop = fresh.slice().reverse().find(action => action.type === "stop");
-        const selected = stop ? [stop] : [...new Map(fresh.map(action => [action.type, action])).values()];
-        const instruction = selected.map(action => action.text).join("，");
-        const parsed = parseLocalCommand(instruction);
-        if (!parsed.understood) continue;
-        const fingerprint = JSON.stringify([parsed.stop, parsed.gear, parsed.steering, parsed.speed, parsed.move]);
-        if (fingerprint === voice.lastFingerprint && liveActionStillApplied(parsed)) continue;
-        voice.lastFingerprint = fingerprint;
-        void submitCommand(instruction, { immediate: true, forceLocal: true, ignoreMishear: true, parsed });
+        const alternatives = Array.from(result);
+        const primary = alternatives[0];
+        const hasNegationOrMention = actionableCommandText(primary.transcript) !== normalizeCommandText(primary.transcript);
+        const candidate = hasNegationOrMention ? primary : (alternatives.find(item => extractLiveActions(item.transcript).length) || primary);
+        dispatchLiveTranscript(candidate.transcript, { id: index, final: result.isFinal }, processed);
       }
     };
     recognition.onerror = event => {
@@ -904,18 +980,18 @@
 
   function extractLiveActions(rawText) {
     // Preserve offsets while excluding negated stops and non-command mentions.
-    const text = rawText.replace(/不要(?:停车|停|刹车)|不用(?:停车|停|刹车)|别(?:停车|停|踩刹车|刹车)|不踩刹车|不停|停车场/g, match => " ".repeat(match.length));
+    const text = actionableCommandText(rawText);
     const rules = [
       ["stop", "stop", /(停下|停车|刹车|别动|不要动|停住|立刻停|马上停|停)/g],
       ["gear", "P", /(挂[Pp]挡|挂[Pp]档|[Pp]挡|[Pp]档|驻车)/g],
-      ["gear", "R", /(挂倒挡|挂倒档|倒挡|倒档|倒车|往后倒|向后倒|后退|往后退|退一点|退后)/g],
-      ["gear", "D", /(挂[Dd]挡|挂[Dd]档|[Dd]挡|[Dd]档|前进|往前开|向前开|往前走|往前一点|开过去|向前一点)/g],
+      ["gear", "R", /(挂倒挡|挂倒档|倒挡|倒档|倒车|往后倒|向后倒|后退|往后退|退一点|退后|倒+|退)/g],
+      ["gear", "D", /(挂[Dd]挡|挂[Dd]档|[Dd]挡|[Dd]档|前进|往前开|向前开|往前走|往前一点|开过去|向前一点|走)/g],
       ["steering", "center", /(回正|打正|摆正|方向盘正|轮子回正|正回来|回一点)/g],
       ["steering", "left_full", /(左(?:边)?(?:打|转|拐)?死|向左打死|往左打死|方向盘.{0,5}左.{0,3}死|左满舵|左边到底)/g],
       ["steering", "right_full", /(右(?:边)?(?:打|转|拐)?死|向右打死|往右打死|方向盘.{0,5}右.{0,3}死|右满舵|右边到底)/g],
-      ["steering", "left_slight", /(向左一点|往左一点|左打一(?:点|小圈|半圈)|左边一点|微微左|稍微左|左转一点|左一点|向左|往左|左转|打左)/g],
-      ["steering", "right_slight", /(向右一点|往右一点|右打一(?:点|小圈|半圈)|右边一点|微微右|稍微右|右转一点|右一点|向右|往右|右转|打右)/g],
-      ["speed", "slow", /(慢慢|慢一点|慢点|缓缓|轻一点|别太快|龟速|稳一点|悠着点)/g],
+      ["steering", "left_slight", /(向左一点|往左一点|左打一(?:点|小圈|半圈)|左边一点|微微左|稍微左|左转一点|左一点|向左|往左|左转|打左|左)/g],
+      ["steering", "right_slight", /(向右一点|往右一点|右打一(?:点|小圈|半圈)|右边一点|微微右|稍微右|右转一点|右一点|向右|往右|右转|打右|右)/g],
+      ["speed", "slow", /(慢慢|慢一点|慢点|缓缓|轻一点|别太快|龟速|稳一点|悠着点|慢)/g],
       ["speed", "fast", /(快一点|快点|加速|踩油门|油门|冲|速度快)/g],
       ["speed", "normal", /(正常速度|匀速|保持速度)/g],
       ["move", "continue", /(继续|接着|保持|就这样|再来一点|再倒一点|再走一点)/g],
@@ -1828,46 +1904,106 @@
     roundRect(ctx, -CAR_SPEC.width / 2, -CAR_SPEC.length / 2, CAR_SPEC.width, CAR_SPEC.length, 14);
     ctx.fill();
 
+    // A longer hood and a smaller rear window make the two ends distinct.
+    ctx.fillStyle = "#ffedb6";
+    roundRect(ctx, -CAR_SPEC.width / 2 + 5, -CAR_SPEC.length / 2 + 9, CAR_SPEC.width - 10, 18, 7);
+    ctx.fill();
+
     const glass = ctx.createLinearGradient(-16, -25, 16, 30);
     glass.addColorStop(0, "#e2f5f4"); glass.addColorStop(.4, "#9cccd1"); glass.addColorStop(1, "#71a4b5");
     ctx.fillStyle = glass;
-    roundRect(ctx, -CAR_SPEC.width / 2 + 7, -CAR_SPEC.length / 2 + 18, CAR_SPEC.width - 14, 27, 7);
+    roundRect(ctx, -CAR_SPEC.width / 2 + 6, -CAR_SPEC.length / 2 + 26, CAR_SPEC.width - 12, 24, 7);
     ctx.fill();
-    roundRect(ctx, -CAR_SPEC.width / 2 + 7, 5, CAR_SPEC.width - 14, 28, 7);
+    roundRect(ctx, -CAR_SPEC.width / 2 + 9, 12, CAR_SPEC.width - 18, 19, 6);
     ctx.fill();
 
     ctx.strokeStyle = "rgba(255,255,255,0.2)";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(0, -CAR_SPEC.length / 2 + 19);
-    ctx.lineTo(0, -CAR_SPEC.length / 2 + 45);
+    ctx.moveTo(0, -CAR_SPEC.length / 2 + 27);
+    ctx.lineTo(0, -CAR_SPEC.length / 2 + 49);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(0, 6);
-    ctx.lineTo(0, 32);
+    ctx.moveTo(0, 13);
+    ctx.lineTo(0, 30);
     ctx.stroke();
 
-    ctx.fillStyle = "#fff7cf";
-    ctx.fillRect(-CAR_SPEC.width / 2 + 6, -CAR_SPEC.length / 2 + 4, 11, 5);
-    ctx.fillRect(CAR_SPEC.width / 2 - 17, -CAR_SPEC.length / 2 + 4, 11, 5);
+    // Keep the forward arrow on the hood, independent of the selected gear.
+    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = "#6a906e";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, -CAR_SPEC.length / 2 + 9);
+    ctx.lineTo(9, -CAR_SPEC.length / 2 + 18);
+    ctx.lineTo(3, -CAR_SPEC.length / 2 + 18);
+    ctx.lineTo(3, -CAR_SPEC.length / 2 + 25);
+    ctx.lineTo(-3, -CAR_SPEC.length / 2 + 25);
+    ctx.lineTo(-3, -CAR_SPEC.length / 2 + 18);
+    ctx.lineTo(-9, -CAR_SPEC.length / 2 + 18);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
 
-    ctx.fillStyle = car.gear === -1 ? "#f8f8ff" : "#ff5b62";
-    ctx.fillRect(-CAR_SPEC.width / 2 + 6, CAR_SPEC.length / 2 - 9, 11, 5);
-    ctx.fillRect(CAR_SPEC.width / 2 - 17, CAR_SPEC.length / 2 - 9, 11, 5);
+    ctx.fillStyle = "#ffffff";
+    roundRect(ctx, -CAR_SPEC.width / 2 + 4, -CAR_SPEC.length / 2 + 4, 12, 6, 3);
+    ctx.fill();
+    roundRect(ctx, CAR_SPEC.width / 2 - 16, -CAR_SPEC.length / 2 + 4, 12, 6, 3);
+    ctx.fill();
+    ctx.fillStyle = "#64846c";
+    roundRect(ctx, -8, -CAR_SPEC.length / 2 + 3, 16, 3, 1.5);
+    ctx.fill();
+
+    // Red rear lights stay visible while the small white reverse lights turn on.
+    ctx.fillStyle = "#ed5961";
+    roundRect(ctx, -17, CAR_SPEC.length / 2 - 13, 34, 5, 2.5);
+    ctx.fill();
+    if (car.gear === -1) {
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(-12, CAR_SPEC.length / 2 - 12, 5, 3);
+      ctx.fillRect(7, CAR_SPEC.length / 2 - 12, 5, 3);
+    }
 
     ctx.fillStyle = "rgba(20,21,25,0.72)";
-    roundRect(ctx, -17, CAR_SPEC.length / 2 - 17, 34, 9, 3);
+    roundRect(ctx, -14, CAR_SPEC.length / 2 - 7, 28, 6, 2);
     ctx.fill();
     ctx.fillStyle = "#f3f3ef";
-    ctx.font = "800 7px 'DM Sans', sans-serif";
+    ctx.font = "800 5px 'DM Sans', sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("AI 002", 0, CAR_SPEC.length / 2 - 10);
+    ctx.fillText("AI 002", 0, CAR_SPEC.length / 2 - 2);
 
     ctx.fillStyle = "rgba(255,255,255,0.33)";
     roundRect(ctx, -CAR_SPEC.width / 2 + 4, -24, 4, 43, 2);
     ctx.fill();
 
     ctx.restore();
+
+    // Labels follow each end of the car without rotating with its body.
+    const labelScale = renderWidth === 720 ? 1.35 : 1;
+    const labelOffset = renderWidth === 720 ? 88 : 74;
+    for (const [offset, label, accent] of [[-labelOffset, "车头", "#477b59"], [labelOffset, "车尾", "#b95660"]]) {
+      const labelX = car.x - Math.sin(car.angle) * offset;
+      const labelY = car.y + Math.cos(car.angle) * offset - Math.abs(bounce);
+      const tipOffset = Math.sign(offset) * (CAR_SPEC.length / 2 + 4);
+      const tipX = car.x - Math.sin(car.angle) * tipOffset;
+      const tipY = car.y + Math.cos(car.angle) * tipOffset - Math.abs(bounce);
+      ctx.save();
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(tipX, tipY);
+      ctx.lineTo(labelX, labelY);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.96)";
+      roundRect(ctx, labelX - 25 * labelScale, labelY - 14 * labelScale, 50 * labelScale, 28 * labelScale, 10 * labelScale);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = accent;
+      ctx.font = `800 ${18 * labelScale}px 'Noto Sans SC', sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(label, labelX, labelY);
+      ctx.restore();
+    }
 
     if (!game.started && !game.demo) {
       ctx.save();
@@ -1883,7 +2019,7 @@
       ctx.shadowColor = "rgba(80,64,42,0.5)";
       ctx.shadowBlur = 3;
       ctx.shadowOffsetY = 1;
-      ctx.font = "700 12px 'Noto Sans SC', sans-serif";
+      ctx.font = `700 ${renderWidth === 720 ? 22 : 12}px 'Noto Sans SC', sans-serif`;
       ctx.textAlign = "center";
       ctx.fillText("先倒车＋左打死", 765, 376);
       ctx.restore();
@@ -2042,6 +2178,11 @@
         ? "已开启增强理解；未配置服务时会自动回退"
         : "已切回零成本本地理解", "", 2400);
     });
+    document.getElementById("voiceEngine").addEventListener("change", () => {
+      document.getElementById("voiceEngineNote").textContent = document.getElementById("voiceEngine").value === "local"
+        ? "首次加载约 42 MB，准备好后直接说“倒”或“停”；声音在本机处理。"
+        : "由浏览器提供语音识别。点一次“开始教学”，即可连续发出指令。";
+    });
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
         closeModal(dom.helpModal);
@@ -2064,7 +2205,7 @@
     if (/xiaohongshu|rednote/i.test(navigator.userAgent)) {
       notice.hidden = false;
       notice.textContent = "如果麦克风不可用，可用文字或快捷指令；也可复制链接到 Safari / Chrome 打开。";
-    } else if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
+    } else if (!(window.SpeechRecognition || window.webkitSpeechRecognition) && !window.ParkingSpeech?.isSupported?.()) {
       notice.hidden = false;
       notice.textContent = "此浏览器暂不支持语音识别，可用文字或下方快捷指令继续玩。";
     }
@@ -2154,6 +2295,13 @@
     navigate,
     demoStep: updateDemo,
     pauseDemo: setDemoPaused,
+    setPracticePose({ x, y, angleDegrees }) {
+      if (document.body.dataset.screen !== "practice" || game.started) throw new Error("Place the car before a practice round starts.");
+      if (![x, y, angleDegrees].every(Number.isFinite)) throw new Error("A practice pose must contain finite coordinates and an angle.");
+      Object.assign(car, { x, y, angle: normalizeAngle(toRad(angleDegrees)), speed: 0, targetSpeed: 0, steer: 0, targetSteer: 0, gear: 0 });
+      drawScene();
+      return debugSnapshot();
+    },
     overlapsDemoTarget: targetId => polygonsIntersect(carCorners(), obstacleCorners(targetId === "demo-wall" ? demoWall : obstacles.find(item => item.id === targetId))),
   };
 

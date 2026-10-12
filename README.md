@@ -16,7 +16,7 @@ Xiaoman is a fictional, gender-neutral AI student. The humor comes from overconf
 
 Browser URL: https://EllieZhangy.github.io/ai-driving-school/
 
-No installation or account is required. Open the HTTPS URL in a phone browser, select Level 01, and watch the comedy demo or start practice. The source remains available as `index.html` plus assets, and `ai-driving-school.html` embeds the same CSS and JavaScript in a standalone HTML file.
+No installation or account is required. Open the HTTPS URL in a phone browser, select Level 01, and watch the comedy demo or start practice. The source remains available as `index.html` plus assets, and `ai-driving-school.html` embeds the app CSS and JavaScript. Local speech recognition still needs the adjacent `vendor/`, `models/`, and audio-worklet file served over HTTP or HTTPS.
 
 GitHub's repository file viewer does not run the game. Use the deployed website URL for sharing and play.
 
@@ -30,18 +30,27 @@ GitHub's repository file viewer does not run the game. Use the deployed website 
 - Playback speed controls animation timing only. Chinese coach narration stays at a natural rate and finishes before the next chapter; AI punchlines remain readable in the scene bubble.
 - Pause/resume and progress indicators. Leaving the tab pauses the demo.
 - Practice retains steering physics, braking, collision penalties, scores, subtitles, and character reactions.
+- The player car has a front-facing hood arrow, bright front lights, a red rear light strip, and upright front/rear labels. Driving head-first or reversing tail-first into the bay both pass when the whole vehicle is aligned inside the bay and stopped.
 - Use two explicit buttons: **Start teaching (开始教学)** opens one continuous voice session; **End teaching (结束教学)** closes it and brakes. Releasing the start button does not end recording. Say reverse, stop, and forward within that same session; a spoken stop affects only the vehicle. Recognized interim commands execute immediately through local parsing; repeated or finalized transcripts do not replay actions.
 - Live voice commands bypass intentional mishearing and model round trips. Stop/brake commands take priority, set both physical and target speed to zero immediately, and invalidate older pending actions. AI student replies are always silent speech bubbles inside the game scene. Demo instructions have a separate coach bubble and are the only synthesized narration, preventing speaker confusion.
 - If recognition ends naturally, the car brakes while the microphone reconnects and waits for a fresh command. Errors, leaving practice, switching away from the page, or finishing a round end live listening and stop movement.
 - Text input and command chips remain available when speech recognition cannot run.
 
+## Chinese speech recognition
+
+The default enhanced mode uses the self-hosted [Vosk small Chinese model](https://alphacephei.com/vosk/models) and [vosk-browser](https://github.com/ccoreilly/vosk-browser). AudioWorklet sends continuous microphone frames to a local WebAssembly worker, with a command vocabulary for short words such as “倒”, “停”, “左”, and “右”. Interim text is acted on immediately; negated commands and unknown movement are excluded, while a clear stop remains effective even with unknown filler. Recognition spaces are normalized, and repeated/finalized transcripts do not replay an action.
+
+The first use downloads approximately 42 MiB of model data plus the bundled library, then caches the model. Wait for the ready message before speaking. This mode requires a browser with AudioWorklet, WebAssembly, and microphone support. Audio stays on the device and no speech API key or speech server is required. Browser recognition remains an explicitly selectable fallback, with multiple recognition hypotheses checked for actionable commands. It may use the browser provider's servers. Failure never silently switches services.
+
+This is a command-focused recognizer, not guaranteed recognition of every voice, accent, or noisy room. The in-browser sound-file smoke check is recorded in `TESTING.md`; physical microphone and phone testing remain separate. See `THIRD_PARTY_NOTICES.md` for model/library provenance and licenses.
+
 Demo movement is scripted cinematic choreography. Practice uses the vehicle simulation. Demo crashes do not carry into practice.
 
 ## Deployment
 
-`.github/workflows/pages.yml` verifies the game, packages only the four public browser files, and deploys GitHub Pages on pushes to `main`. Enable GitHub Pages with GitHub Actions as its source in repository settings. No dependencies or external font downloads are required.
+`.github/workflows/pages.yml` verifies all game and speech tests, packages the public HTML, JavaScript, styles, media, vendored speech library, and Chinese model, and deploys GitHub Pages on pushes to `main`. Enable GitHub Pages with GitHub Actions as its source in repository settings. No package installation or external font downloads are required.
 
-GitHub Pages runs static files only. The hosted game uses local command interpretation and browser speech synthesis/recognition where available. The optional language-model toggle is hidden on `github.io`; `server.mjs` is not deployed or executed by Pages.
+GitHub Pages runs static files only. The hosted game uses local command interpretation, in-browser Chinese recognition, and browser speech synthesis where available. The optional language-model toggle is hidden on `github.io`; `server.mjs` is not deployed or executed by Pages.
 
 For a public language-model-backed version, deploy `server.mjs` behind HTTPS on a server supporting Node.js, configure the environment variables there, and keep the frontend and API under the same origin. Do not put API keys in HTML or client-side JavaScript. This prototype does not yet include production API rate limits or spending controls.
 
@@ -65,12 +74,12 @@ python3 -m http.server 8080
 
 Copy `.env.example` to `.env` and set `LLM_BASE_URL`, `LLM_API_KEY`, and `LLM_MODEL` for an OpenAI-compatible Chat Completions provider. Restart the local server and enable enhanced interpretation. The key stays on the server. If unavailable, commands fall back to local parsing.
 
-Browser recognition and Chinese voices depend on the browser, operating system, and network. Text commands remain usable without microphone access. Browser recognition may send speech to its provider; enhanced interpretation sends commands to the configured model provider. Secrets, dependencies, and logs are ignored by Git.
+Browser recognition and Chinese voices depend on the browser, operating system, and network. Text commands remain usable without microphone access. The local speech mode processes audio on the device; the selectable browser mode may send speech to its provider; enhanced interpretation sends text commands to the configured model provider. Secrets, dependencies, and logs are ignored by Git.
 
 ## Commands
 
-Try “挂倒挡，方向盘向左打死，慢慢倒”, then “回正，继续倒”, and finally “停车，踩刹车”. To pass, the car must be fully inside the green bay, aligned, and stopped.
+Short commands include “倒”, “停”, “前进”, “左”, “右”, and “回正”. You can also try “挂倒挡，方向盘向左打死，慢慢倒”, then “回正，继续倒”, and finally “停车，踩刹车”. To pass, drive or reverse into the green bay, align the whole vehicle within it, and stop.
 
 ## Validation
 
-Run `npm test`, `node --check game.js`, and `node --check server.mjs`. See `TESTING.md` for checked behavior and device limitations. `window.__AI_DRIVE_DEBUG__` exposes local simulation helpers for development.
+Run `npm test`, `node --check game.js`, `node --check voice-recognition.js`, `node --check voice-audio-worklet.js`, and `node --check server.mjs`. See `TESTING.md` for checked behavior and device limitations. `window.__AI_DRIVE_DEBUG__` exposes local simulation helpers for development.
