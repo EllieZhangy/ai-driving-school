@@ -609,3 +609,22 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
 }
+
+/* Screen navigation keeps the lobby separate from the active lesson. */
+[hidden] { display: none !important; }
+.home-screen { padding: 30px 0; }
+.home-hero { padding: clamp(26px, 6vw, 76px); border: 1px solid var(--line); border-radius: 26px; background: radial-gradient(ellipse at 85% 30%,rgba(170,131,255,.22),transparent 65%),var(--panel); }
+.home-hero h2 { font-size: clamp(32px,5vw,66px); line-height: 1.2; margin: 20px 0; letter-spacing: -.04em; }
+.home-hero p, .level-card p, .home-note { color: var(--muted); line-height: 1.8; }
+.home-hero .primary-button { margin-top: 16px; min-height: 52px; }
+.level-card { display: flex; align-items: center; gap: 28px; padding: 30px; margin-top: 20px; background: var(--panel); border: 1px solid var(--line); border-radius: 20px; }
+.level-number { color: var(--yellow); font-size: 64px; font-weight: 800; }
+.level-card h3 { font-size: 25px; margin: 8px 0; }
+.level-actions { display: flex; gap: 10px; margin-left: auto; }
+.home-note { text-align: center; font-size: 12px; }
+.level-nav { display: flex; align-items: center; gap: 18px; margin-bottom: 18px; flex-wrap: wrap; }
+.level-nav label { margin-left: auto; color: var(--muted); font-size: 13px; }
+.level-nav select { background: var(--panel); color: var(--text); padding: 9px; border: 1px solid var(--line); border-radius: 9px; }
+body[data-screen="home"] #resetButton { display: none; }
+body[data-screen="demo"] .command-guide, body[data-screen="demo"] .input-panel, body[data-screen="demo"] .difficulty-wrap { display: none; }
+@media(max-width:760px) { .level-card { flex-wrap: wrap; gap: 16px; padding: 22px; } .level-actions { margin-left: 0; width: 100%; } .level-actions button { flex: 1; } .level-nav label { margin-left: 0; } }

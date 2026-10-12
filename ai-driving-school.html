@@ -6,8 +6,7 @@
   <meta name="theme-color" content="#12131a" />
   <meta name="description" content="AI驾校：只能用语音或文字教AI妹妹完成倒车入库。" />
   <title>AI驾校｜教妹妹倒车入库</title>
-  <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap');
+  <style>@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap');
 
 :root {
   --bg: #101117;
@@ -618,7 +617,26 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
 }
-  </style>
+
+/* Screen navigation keeps the lobby separate from the active lesson. */
+[hidden] { display: none !important; }
+.home-screen { padding: 30px 0; }
+.home-hero { padding: clamp(26px, 6vw, 76px); border: 1px solid var(--line); border-radius: 26px; background: radial-gradient(ellipse at 85% 30%,rgba(170,131,255,.22),transparent 65%),var(--panel); }
+.home-hero h2 { font-size: clamp(32px,5vw,66px); line-height: 1.2; margin: 20px 0; letter-spacing: -.04em; }
+.home-hero p, .level-card p, .home-note { color: var(--muted); line-height: 1.8; }
+.home-hero .primary-button { margin-top: 16px; min-height: 52px; }
+.level-card { display: flex; align-items: center; gap: 28px; padding: 30px; margin-top: 20px; background: var(--panel); border: 1px solid var(--line); border-radius: 20px; }
+.level-number { color: var(--yellow); font-size: 64px; font-weight: 800; }
+.level-card h3 { font-size: 25px; margin: 8px 0; }
+.level-actions { display: flex; gap: 10px; margin-left: auto; }
+.home-note { text-align: center; font-size: 12px; }
+.level-nav { display: flex; align-items: center; gap: 18px; margin-bottom: 18px; flex-wrap: wrap; }
+.level-nav label { margin-left: auto; color: var(--muted); font-size: 13px; }
+.level-nav select { background: var(--panel); color: var(--text); padding: 9px; border: 1px solid var(--line); border-radius: 9px; }
+body[data-screen="home"] #resetButton { display: none; }
+body[data-screen="demo"] .command-guide, body[data-screen="demo"] .input-panel, body[data-screen="demo"] .difficulty-wrap { display: none; }
+@media(max-width:760px) { .level-card { flex-wrap: wrap; gap: 16px; padding: 22px; } .level-actions { margin-left: 0; width: 100%; } .level-actions button { flex: 1; } .level-nav label { margin-left: 0; } }
+</style>
 </head>
 <body>
   <div class="ambient ambient-a" aria-hidden="true"></div>
@@ -642,6 +660,13 @@ button:focus-visible, input:focus-visible, select:focus-visible {
       </div>
     </header>
 
+    <section id="homeScreen" class="home-screen">
+      <div class="home-hero"><span class="section-kicker">WELCOME TO AI DRIVING SCHOOL</span><h2>你负责指挥。<br>她负责……制造意外。</h2><p>坐上副驾驶，教小满倒车入库。先看一场爆笑示范，或者直接上场试试。</p><button class="primary-button" data-route="demo">▶ 先看爆笑 Demo</button></div>
+      <div class="level-card"><span class="level-number">01</span><div><span class="section-kicker">科目二 · 开放练习</span><h3>右侧倒车入库</h3><p>把车完整倒进绿色车位，再喊一声“停车”。<br>方向盘归她，耐心归你。</p></div><div class="level-actions"><button class="secondary-button" data-route="demo">观看 Demo</button><button class="primary-button" data-route="practice">自己尝试 →</button></div></div>
+      <p class="home-note">更多关卡还在修路中 · 本关支持中文语音与文字指令</p>
+    </section>
+    <div id="levelScreen" hidden>
+    <nav class="level-nav"><button class="secondary-button" data-route="home">← 返回首页</button><strong id="modeLabel">第一关 · 自己尝试</strong><label>Demo 语速 <select id="voiceRate"><option value="0.65">慢悠悠</option><option value="0.8" selected>慢一点</option><option value="1">正常</option></select></label></nav>
     <section class="score-strip" aria-label="游戏状态">
       <div class="score-item score-primary">
         <span class="score-label">当前得分</span>
@@ -762,7 +787,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
               <span class="toggle-ui"></span>
               <span>
                 <strong>大模型增强理解</strong>
-                <small>需运行 server.mjs 并配置 API；失败会自动回退本地解析</small>
+                <small>开启后更懂自然表达；不可用时自动使用基础理解</small>
               </span>
             </label>
           </div>
@@ -779,8 +804,10 @@ button:focus-visible, input:focus-visible, select:focus-visible {
         </div>
       </aside>
     </section>
+    </div>
   </main>
 
+  <div id="demoEndModal" class="modal" aria-hidden="true"><div class="modal-backdrop"></div><section class="modal-card result-card" role="dialog" aria-modal="true" aria-labelledby="demoEndTitle"><div class="result-emoji">💥 → 🚗 → 🎉</div><span class="section-kicker">DEMO COMPLETE</span><h2 id="demoEndTitle">撞了三次，终于进去了。</h2><p>小满：这是倒车入库，不是倒车入土。<br>现在轮到你当教练了！</p><div class="result-actions"><button class="secondary-button" data-route="demo">再看一遍 Demo</button><button class="primary-button" data-route="practice">自己尝试</button></div><button class="secondary-button modal-primary" data-route="home">返回首页</button></section></div>
   <div id="helpModal" class="modal" aria-hidden="true">
     <div class="modal-backdrop" data-close-modal="help"></div>
     <section class="modal-card help-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
@@ -814,14 +841,14 @@ button:focus-visible, input:focus-visible, select:focus-visible {
       </div>
       <p id="resultComment" class="result-comment">小满：我就说我有天赋吧。</p>
       <div class="result-actions">
+        <button class="secondary-button" data-route="home">返回首页</button>
         <button id="copyResultButton" class="secondary-button" type="button">复制战绩文案</button>
         <button id="playAgainButton" class="primary-button" type="button">再来一把</button>
       </div>
     </section>
   </div>
 
-  <script>
-(() => {
+  <script>(() => {
   "use strict";
 
   const WORLD = { width: 1100, height: 700 };
@@ -1110,7 +1137,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "zh-CN";
-    utterance.rate = 1.08;
+    utterance.rate = game.demo ? Number(document.getElementById("voiceRate").value) : 1;
     utterance.pitch = 1.13;
     const preferred = availableVoices.find((voice) => /zh-CN/i.test(voice.lang) && /Xiaoxiao|Tingting|Meijia|Female|女/i.test(voice.name))
       || availableVoices.find((voice) => /^zh/i.test(voice.lang));
@@ -1430,7 +1457,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 
   async function submitCommand(rawText, options = {}) {
     const text = String(rawText || "").trim();
-    if (!text || game.finished) return;
+    if (!text || game.finished || document.body.dataset.screen !== "practice") return;
 
     if (game.demo && !options.fromDemo) stopDemo(false);
 
@@ -1718,7 +1745,10 @@ button:focus-visible, input:focus-visible, select:focus-visible {
     ]), "panicked");
 
     if (game.crashes >= 4) {
-      window.setTimeout(() => finishGame(false), 650);
+      const crashRound = game.roundId;
+      window.setTimeout(() => {
+        if (game.roundId === crashRound) finishGame(false);
+      }, 650);
     }
   }
 
@@ -1731,7 +1761,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
         vy: (Math.random() - 0.5) * 145,
         life: 0.55 + Math.random() * 0.35,
         maxLife: 0.9,
-        size: 2 + Math.random() * 4,
+        size: game.demo ? 8 + Math.random() * 18 : 2 + Math.random() * 4,
+        color: game.demo ? pick(["#ff6830", "#ffb52e", "#fff0a0", "#777780"]) : "#ffd84b",
       });
     }
   }
@@ -1769,7 +1800,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   }
 
   function checkParkingSuccess() {
-    if (!game.started || game.finished) return;
+    if (!game.started || game.finished || game.demo) return;
     const inside = isCarFullyInTarget();
     const aligned = isVerticallyAligned();
 
@@ -1830,11 +1861,14 @@ button:focus-visible, input:focus-visible, select:focus-visible {
       dom.resultComment.textContent = "小满：不是我不想学，是这些标杆针对我。";
     }
 
-    window.setTimeout(() => openModal(dom.resultModal), success ? 1000 : 650);
+    const resultRound = game.roundId;
+    window.setTimeout(() => {
+      if (game.roundId === resultRound && game.finished) openModal(dom.resultModal);
+    }, success ? 1000 : 650);
   }
 
   function updatePhysics(dt, now) {
-    if (game.finished) return;
+    if (game.finished || game.demo || document.body.dataset.screen === "home") return;
 
     if (game.started) game.elapsed = (now - game.startTime) / 1000;
 
@@ -1917,62 +1951,110 @@ button:focus-visible, input:focus-visible, select:focus-visible {
     visual.skidMarks = visual.skidMarks.filter((mark) => mark.life > 0);
   }
 
+  // Demo choreography is cinematic; practice continues to use the vehicle physics.
+  const demoScenes = [
+    { duration: 7, x: 820, y: 470, angle: 90, text: "今天争取一把过。先声明，一把是一个量词，不是次数。" },
+    { duration: 6, x: 1015, y: 470, angle: 90, crash: true, text: "哎呀！我挂的是倒挡，怎么人生还在往前冲？保险杠先下班了。" },
+    { duration: 7, x: 485, y: 470, angle: 90, text: "反方向，反方向！教练别急，我正在给训练场画一条心电图。" },
+    { duration: 6, x: 595, y: 270, angle: 180, crash: true, text: "砰！这不是撞车，这是和隔壁车打个招呼。它好像不太礼貌。" },
+    { duration: 7, x: 910, y: 470, angle: 90, text: "再往前一点。我的车技就像我的余额，来来回回，最后归零。" },
+    { duration: 6, x: 875, y: 275, angle: 180, crash: true, text: "轰！第三次了。车说它想退休，教练说他想转行。" },
+    { duration: 7, x: 820, y: 470, angle: 90, text: "好了，不闹了。挂倒挡，左打死，慢慢倒。车位，我这次真的来了。" },
+    { duration: 7, x: 730, y: 330, angle: 180, text: "车身转正，方向盘回正。刚才是喜剧，现在是教学，请认真看。" },
+    { duration: 7, x: 730, y: 163, angle: 180, text: "继续慢慢倒，进绿色车位，踩刹车。看！终于倒进去了，我先给自己鼓个掌。" },
+  ];
+  let demoFrom = null;
+  let demoSceneStart = 0;
+  let demoArrived = false;
+
+  function enterDemoScene(now) {
+    const scene = demoScenes[game.demoPhase];
+    demoFrom = { x: car.x, y: car.y, angle: car.angle };
+    demoSceneStart = now;
+    demoArrived = false;
+    car.gear = game.demoPhase % 2 ? -1 : 1;
+    setSisterSpeech(scene.text, scene.crash ? "panicked" : "neutral");
+    setBadge(`Demo · ${game.demoPhase + 1}/${demoScenes.length}`);
+  }
+
   function updateDemo(now) {
-    if (!game.demo || game.finished || game.demoCommandLock) return;
-    const elapsed = (now - game.demoStartedAt) / 1000;
-
-    if (game.demoPhase === 0 && elapsed > 0.55) {
-      game.demoCommandLock = true;
-      game.demoPhase = 1;
-      submitCommand("挂倒挡，方向盘向左打死，慢慢倒", { fromDemo: true, forceLocal: true, ignoreMishear: true, immediate: true })
-        .finally(() => { game.demoCommandLock = false; });
-      return;
+    if (!game.demo) return;
+    const scene = demoScenes[game.demoPhase];
+    // Slower narration extends each scene instead of cutting off the punchline.
+    const duration = scene.duration * 0.8 / Number(document.getElementById("voiceRate").value);
+    const elapsed = (now - demoSceneStart) / 1000;
+    const t = clamp(elapsed / (duration * 0.65), 0, 1);
+    const eased = t * t * (3 - 2 * t);
+    car.x = demoFrom.x + (scene.x - demoFrom.x) * eased;
+    car.y = demoFrom.y + (scene.y - demoFrom.y) * eased;
+    car.angle = demoFrom.angle + (toRad(scene.angle) - demoFrom.angle) * eased;
+    game.elapsed = (now - game.demoStartedAt) / 1000;
+    if (t === 1 && !demoArrived) {
+      demoArrived = true;
+      if (scene.crash) {
+        game.crashes += 1;
+        visual.shake = 22;
+        for (let i = 0; i < 5; i += 1) createImpactParticles();
+        showToast(["💥 保险杠：我先走一步", "💥 隔壁车：你礼貌吗？", "💥 教练：我的血压倒进去了"][game.crashes - 1], "danger", 3000);
+      }
     }
-
-    if (game.demoPhase === 1 && car.angle >= toRad(176)) {
-      game.demoCommandLock = true;
-      game.demoPhase = 2;
-      submitCommand("回正，继续倒", { fromDemo: true, forceLocal: true, ignoreMishear: true, immediate: true })
-        .finally(() => { game.demoCommandLock = false; });
-      return;
-    }
-
-    if (game.demoPhase === 2 && car.y <= TARGET.y + TARGET.height / 2) {
-      game.demoCommandLock = true;
-      game.demoPhase = 3;
-      submitCommand("停车，踩刹车", { fromDemo: true, forceLocal: true, ignoreMishear: true, immediate: true })
-        .finally(() => { game.demoCommandLock = false; });
-      return;
-    }
-
-    if (elapsed > 16 && !game.finished) {
-      stopDemo(false);
-      showToast("自动演示被意外打断，可以重新开始再试一次", "danger", 2600);
+    updateHud();
+    if (elapsed < duration || (!game.muted && window.speechSynthesis?.speaking)) return;
+    game.demoPhase += 1;
+    if (game.demoPhase < demoScenes.length) enterDemoScene(now);
+    else {
+      stopDemo();
+      car.gear = 0;
+      car.speed = car.targetSpeed = 0;
+      game.finished = true;
+      createConfetti();
+      setAvatarMood("happy");
+      updateHud();
+      openModal(document.getElementById("demoEndModal"));
     }
   }
 
   function startDemo() {
+    stopDemo();
     resetGame({ silent: true });
     game.beforeDemoDifficulty = dom.difficultySelect.value;
     dom.difficultySelect.value = "0";
     game.demo = true;
-    game.demoPhase = 0;
+    game.started = true;
     game.demoStartedAt = performance.now();
-    dom.demoButton.textContent = "■ 停止演示";
+    dom.demoButton.textContent = "自己尝试 →";
     dom.demoButton.classList.add("active");
     clearLog();
-    setSisterSpeech("导演模式？行，我这次尽量按剧本演。", "neutral");
-    showToast("自动演示开始：所有动作仍通过同一套指令系统执行", "", 2600);
+    enterDemoScene(game.demoStartedAt);
   }
 
   function stopDemo(restoreDifficulty = true) {
     if (!game.demo) return;
     game.demo = false;
     game.demoPhase = 0;
-    game.demoCommandLock = false;
     dom.demoButton.textContent = "▶ 自动演示一遍";
     dom.demoButton.classList.remove("active");
     if (restoreDifficulty) dom.difficultySelect.value = game.beforeDemoDifficulty;
+    window.speechSynthesis?.cancel();
+  }
+
+  function navigate(screen) {
+    if (speechRecognition) speechRecognition.abort();
+    finalTranscript = "";
+    stopDemo();
+    window.speechSynthesis?.cancel();
+    closeModal(dom.helpModal);
+    closeModal(dom.resultModal);
+    closeModal(document.getElementById("demoEndModal"));
+    document.body.dataset.screen = screen;
+    document.getElementById("homeScreen").hidden = screen !== "home";
+    document.getElementById("levelScreen").hidden = screen === "home";
+    document.getElementById("modeLabel").textContent = screen === "demo" ? "第一关 · 爆笑 Demo" : "第一关 · 自己尝试";
+    resetGame({ silent: true });
+    clearLog();
+    setSisterSpeech("哥/姐，我今天一定能一把过。大概吧。", "neutral", { speakIt: false, logIt: false });
+    if (screen === "demo") startDemo();
+    document.querySelector(screen === "home" ? ".home-hero .primary-button" : ".level-nav button").focus();
   }
 
   function drawScene() {
@@ -2291,7 +2373,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
     for (const particle of visual.particles) {
       ctx.save();
       ctx.globalAlpha = clamp(particle.life / particle.maxLife, 0, 1);
-      ctx.fillStyle = "#ffd84b";
+      ctx.fillStyle = particle.color;
       ctx.beginPath();
       ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
       ctx.fill();
@@ -2345,6 +2427,9 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   }
 
   function bindEvents() {
+    document.querySelectorAll("[data-route]").forEach((button) => {
+      button.addEventListener("click", () => navigate(button.dataset.route));
+    });
     dom.sendButton.addEventListener("click", () => submitCommand(dom.commandInput.value));
     dom.commandInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && !event.isComposing) submitCommand(dom.commandInput.value);
@@ -2353,7 +2438,9 @@ button:focus-visible, input:focus-visible, select:focus-visible {
     dom.clearLogButton.addEventListener("click", clearLog);
     dom.resetButton.addEventListener("click", () => {
       if (game.listening && speechRecognition) speechRecognition.stop();
-      resetGame();
+      stopDemo();
+      if (document.body.dataset.screen === "demo") startDemo();
+      else resetGame();
       clearLog();
       showToast("已重置训练场");
     });
@@ -2364,15 +2451,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
       if (game.muted && "speechSynthesis" in window) window.speechSynthesis.cancel();
       showToast(game.muted ? "角色语音已关闭" : "角色语音已开启");
     });
-    dom.demoButton.addEventListener("click", () => {
-      if (game.demo) {
-        stopDemo();
-        car.targetSpeed = 0;
-        showToast("自动演示已停止");
-      } else {
-        startDemo();
-      }
-    });
+    dom.demoButton.addEventListener("click", () => navigate(game.demo ? "practice" : "demo"));
     dom.helpButton.addEventListener("click", () => openModal(dom.helpModal));
     document.querySelectorAll("[data-close-modal='help']").forEach((element) => {
       element.addEventListener("click", () => closeModal(dom.helpModal));
@@ -2421,17 +2500,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
     drawScene();
     requestAnimationFrame(gameLoop);
 
-    window.setTimeout(() => {
-      try {
-        if (!sessionStorage.getItem("ai-driving-help-seen")) {
-          openModal(dom.helpModal);
-          sessionStorage.setItem("ai-driving-help-seen", "1");
-        }
-      } catch (error) {
-        // Some embedded previews disable storage. The game remains fully usable.
-        openModal(dom.helpModal);
-      }
-    }, 420);
+    navigate("home");
   }
 
   function debugSnapshot() {
@@ -2453,6 +2522,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
         unclear: game.unclear,
         score: currentScore(),
       },
+      screen: document.body.dataset.screen,
+      demo: { active: game.demo, phase: game.demoPhase },
       parking: {
         inside: isCarFullyInTarget(),
         aligned: isVerticallyAligned(),
@@ -2500,10 +2571,12 @@ button:focus-visible, input:focus-visible, select:focus-visible {
     advance: debugAdvance,
     autopark: debugAutopark,
     parse: parseLocalCommand,
+    navigate,
+    demoStep: updateDemo,
   };
 
   init();
 })();
-  </script>
+</script>
 </body>
 </html>

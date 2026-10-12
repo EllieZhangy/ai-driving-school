@@ -287,7 +287,7 @@
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "zh-CN";
-    utterance.rate = 1.08;
+    utterance.rate = game.demo ? Number(document.getElementById("voiceRate").value) : 1;
     utterance.pitch = 1.13;
     const preferred = availableVoices.find((voice) => /zh-CN/i.test(voice.lang) && /Xiaoxiao|Tingting|Meijia|Female|女/i.test(voice.name))
       || availableVoices.find((voice) => /^zh/i.test(voice.lang));
@@ -607,7 +607,7 @@
 
   async function submitCommand(rawText, options = {}) {
     const text = String(rawText || "").trim();
-    if (!text || game.finished) return;
+    if (!text || game.finished || document.body.dataset.screen !== "practice") return;
 
     if (game.demo && !options.fromDemo) stopDemo(false);
 
@@ -895,7 +895,10 @@
     ]), "panicked");
 
     if (game.crashes >= 4) {
-      window.setTimeout(() => finishGame(false), 650);
+      const crashRound = game.roundId;
+      window.setTimeout(() => {
+        if (game.roundId === crashRound) finishGame(false);
+      }, 650);
     }
   }
 
@@ -908,7 +911,8 @@
         vy: (Math.random() - 0.5) * 145,
         life: 0.55 + Math.random() * 0.35,
         maxLife: 0.9,
-        size: 2 + Math.random() * 4,
+        size: game.demo ? 8 + Math.random() * 18 : 2 + Math.random() * 4,
+        color: game.demo ? pick(["#ff6830", "#ffb52e", "#fff0a0", "#777780"]) : "#ffd84b",
       });
     }
   }
@@ -946,7 +950,7 @@
   }
 
   function checkParkingSuccess() {
-    if (!game.started || game.finished) return;
+    if (!game.started || game.finished || game.demo) return;
     const inside = isCarFullyInTarget();
     const aligned = isVerticallyAligned();
 
@@ -1007,11 +1011,14 @@
       dom.resultComment.textContent = "小满：不是我不想学，是这些标杆针对我。";
     }
 
-    window.setTimeout(() => openModal(dom.resultModal), success ? 1000 : 650);
+    const resultRound = game.roundId;
+    window.setTimeout(() => {
+      if (game.roundId === resultRound && game.finished) openModal(dom.resultModal);
+    }, success ? 1000 : 650);
   }
 
   function updatePhysics(dt, now) {
-    if (game.finished) return;
+    if (game.finished || game.demo || document.body.dataset.screen === "home") return;
 
     if (game.started) game.elapsed = (now - game.startTime) / 1000;
 
@@ -1094,62 +1101,110 @@
     visual.skidMarks = visual.skidMarks.filter((mark) => mark.life > 0);
   }
 
+  // Demo choreography is cinematic; practice continues to use the vehicle physics.
+  const demoScenes = [
+    { duration: 7, x: 820, y: 470, angle: 90, text: "今天争取一把过。先声明，一把是一个量词，不是次数。" },
+    { duration: 6, x: 1015, y: 470, angle: 90, crash: true, text: "哎呀！我挂的是倒挡，怎么人生还在往前冲？保险杠先下班了。" },
+    { duration: 7, x: 485, y: 470, angle: 90, text: "反方向，反方向！教练别急，我正在给训练场画一条心电图。" },
+    { duration: 6, x: 595, y: 270, angle: 180, crash: true, text: "砰！这不是撞车，这是和隔壁车打个招呼。它好像不太礼貌。" },
+    { duration: 7, x: 910, y: 470, angle: 90, text: "再往前一点。我的车技就像我的余额，来来回回，最后归零。" },
+    { duration: 6, x: 875, y: 275, angle: 180, crash: true, text: "轰！第三次了。车说它想退休，教练说他想转行。" },
+    { duration: 7, x: 820, y: 470, angle: 90, text: "好了，不闹了。挂倒挡，左打死，慢慢倒。车位，我这次真的来了。" },
+    { duration: 7, x: 730, y: 330, angle: 180, text: "车身转正，方向盘回正。刚才是喜剧，现在是教学，请认真看。" },
+    { duration: 7, x: 730, y: 163, angle: 180, text: "继续慢慢倒，进绿色车位，踩刹车。看！终于倒进去了，我先给自己鼓个掌。" },
+  ];
+  let demoFrom = null;
+  let demoSceneStart = 0;
+  let demoArrived = false;
+
+  function enterDemoScene(now) {
+    const scene = demoScenes[game.demoPhase];
+    demoFrom = { x: car.x, y: car.y, angle: car.angle };
+    demoSceneStart = now;
+    demoArrived = false;
+    car.gear = game.demoPhase % 2 ? -1 : 1;
+    setSisterSpeech(scene.text, scene.crash ? "panicked" : "neutral");
+    setBadge(`Demo · ${game.demoPhase + 1}/${demoScenes.length}`);
+  }
+
   function updateDemo(now) {
-    if (!game.demo || game.finished || game.demoCommandLock) return;
-    const elapsed = (now - game.demoStartedAt) / 1000;
-
-    if (game.demoPhase === 0 && elapsed > 0.55) {
-      game.demoCommandLock = true;
-      game.demoPhase = 1;
-      submitCommand("挂倒挡，方向盘向左打死，慢慢倒", { fromDemo: true, forceLocal: true, ignoreMishear: true, immediate: true })
-        .finally(() => { game.demoCommandLock = false; });
-      return;
+    if (!game.demo) return;
+    const scene = demoScenes[game.demoPhase];
+    // Slower narration extends each scene instead of cutting off the punchline.
+    const duration = scene.duration * 0.8 / Number(document.getElementById("voiceRate").value);
+    const elapsed = (now - demoSceneStart) / 1000;
+    const t = clamp(elapsed / (duration * 0.65), 0, 1);
+    const eased = t * t * (3 - 2 * t);
+    car.x = demoFrom.x + (scene.x - demoFrom.x) * eased;
+    car.y = demoFrom.y + (scene.y - demoFrom.y) * eased;
+    car.angle = demoFrom.angle + (toRad(scene.angle) - demoFrom.angle) * eased;
+    game.elapsed = (now - game.demoStartedAt) / 1000;
+    if (t === 1 && !demoArrived) {
+      demoArrived = true;
+      if (scene.crash) {
+        game.crashes += 1;
+        visual.shake = 22;
+        for (let i = 0; i < 5; i += 1) createImpactParticles();
+        showToast(["💥 保险杠：我先走一步", "💥 隔壁车：你礼貌吗？", "💥 教练：我的血压倒进去了"][game.crashes - 1], "danger", 3000);
+      }
     }
-
-    if (game.demoPhase === 1 && car.angle >= toRad(176)) {
-      game.demoCommandLock = true;
-      game.demoPhase = 2;
-      submitCommand("回正，继续倒", { fromDemo: true, forceLocal: true, ignoreMishear: true, immediate: true })
-        .finally(() => { game.demoCommandLock = false; });
-      return;
-    }
-
-    if (game.demoPhase === 2 && car.y <= TARGET.y + TARGET.height / 2) {
-      game.demoCommandLock = true;
-      game.demoPhase = 3;
-      submitCommand("停车，踩刹车", { fromDemo: true, forceLocal: true, ignoreMishear: true, immediate: true })
-        .finally(() => { game.demoCommandLock = false; });
-      return;
-    }
-
-    if (elapsed > 16 && !game.finished) {
-      stopDemo(false);
-      showToast("自动演示被意外打断，可以重新开始再试一次", "danger", 2600);
+    updateHud();
+    if (elapsed < duration || (!game.muted && window.speechSynthesis?.speaking)) return;
+    game.demoPhase += 1;
+    if (game.demoPhase < demoScenes.length) enterDemoScene(now);
+    else {
+      stopDemo();
+      car.gear = 0;
+      car.speed = car.targetSpeed = 0;
+      game.finished = true;
+      createConfetti();
+      setAvatarMood("happy");
+      updateHud();
+      openModal(document.getElementById("demoEndModal"));
     }
   }
 
   function startDemo() {
+    stopDemo();
     resetGame({ silent: true });
     game.beforeDemoDifficulty = dom.difficultySelect.value;
     dom.difficultySelect.value = "0";
     game.demo = true;
-    game.demoPhase = 0;
+    game.started = true;
     game.demoStartedAt = performance.now();
-    dom.demoButton.textContent = "■ 停止演示";
+    dom.demoButton.textContent = "自己尝试 →";
     dom.demoButton.classList.add("active");
     clearLog();
-    setSisterSpeech("导演模式？行，我这次尽量按剧本演。", "neutral");
-    showToast("自动演示开始：所有动作仍通过同一套指令系统执行", "", 2600);
+    enterDemoScene(game.demoStartedAt);
   }
 
   function stopDemo(restoreDifficulty = true) {
     if (!game.demo) return;
     game.demo = false;
     game.demoPhase = 0;
-    game.demoCommandLock = false;
     dom.demoButton.textContent = "▶ 自动演示一遍";
     dom.demoButton.classList.remove("active");
     if (restoreDifficulty) dom.difficultySelect.value = game.beforeDemoDifficulty;
+    window.speechSynthesis?.cancel();
+  }
+
+  function navigate(screen) {
+    if (speechRecognition) speechRecognition.abort();
+    finalTranscript = "";
+    stopDemo();
+    window.speechSynthesis?.cancel();
+    closeModal(dom.helpModal);
+    closeModal(dom.resultModal);
+    closeModal(document.getElementById("demoEndModal"));
+    document.body.dataset.screen = screen;
+    document.getElementById("homeScreen").hidden = screen !== "home";
+    document.getElementById("levelScreen").hidden = screen === "home";
+    document.getElementById("modeLabel").textContent = screen === "demo" ? "第一关 · 爆笑 Demo" : "第一关 · 自己尝试";
+    resetGame({ silent: true });
+    clearLog();
+    setSisterSpeech("哥/姐，我今天一定能一把过。大概吧。", "neutral", { speakIt: false, logIt: false });
+    if (screen === "demo") startDemo();
+    document.querySelector(screen === "home" ? ".home-hero .primary-button" : ".level-nav button").focus();
   }
 
   function drawScene() {
@@ -1468,7 +1523,7 @@
     for (const particle of visual.particles) {
       ctx.save();
       ctx.globalAlpha = clamp(particle.life / particle.maxLife, 0, 1);
-      ctx.fillStyle = "#ffd84b";
+      ctx.fillStyle = particle.color;
       ctx.beginPath();
       ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
       ctx.fill();
@@ -1522,6 +1577,9 @@
   }
 
   function bindEvents() {
+    document.querySelectorAll("[data-route]").forEach((button) => {
+      button.addEventListener("click", () => navigate(button.dataset.route));
+    });
     dom.sendButton.addEventListener("click", () => submitCommand(dom.commandInput.value));
     dom.commandInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && !event.isComposing) submitCommand(dom.commandInput.value);
@@ -1530,7 +1588,9 @@
     dom.clearLogButton.addEventListener("click", clearLog);
     dom.resetButton.addEventListener("click", () => {
       if (game.listening && speechRecognition) speechRecognition.stop();
-      resetGame();
+      stopDemo();
+      if (document.body.dataset.screen === "demo") startDemo();
+      else resetGame();
       clearLog();
       showToast("已重置训练场");
     });
@@ -1541,15 +1601,7 @@
       if (game.muted && "speechSynthesis" in window) window.speechSynthesis.cancel();
       showToast(game.muted ? "角色语音已关闭" : "角色语音已开启");
     });
-    dom.demoButton.addEventListener("click", () => {
-      if (game.demo) {
-        stopDemo();
-        car.targetSpeed = 0;
-        showToast("自动演示已停止");
-      } else {
-        startDemo();
-      }
-    });
+    dom.demoButton.addEventListener("click", () => navigate(game.demo ? "practice" : "demo"));
     dom.helpButton.addEventListener("click", () => openModal(dom.helpModal));
     document.querySelectorAll("[data-close-modal='help']").forEach((element) => {
       element.addEventListener("click", () => closeModal(dom.helpModal));
@@ -1598,17 +1650,7 @@
     drawScene();
     requestAnimationFrame(gameLoop);
 
-    window.setTimeout(() => {
-      try {
-        if (!sessionStorage.getItem("ai-driving-help-seen")) {
-          openModal(dom.helpModal);
-          sessionStorage.setItem("ai-driving-help-seen", "1");
-        }
-      } catch (error) {
-        // Some embedded previews disable storage. The game remains fully usable.
-        openModal(dom.helpModal);
-      }
-    }, 420);
+    navigate("home");
   }
 
   function debugSnapshot() {
@@ -1630,6 +1672,8 @@
         unclear: game.unclear,
         score: currentScore(),
       },
+      screen: document.body.dataset.screen,
+      demo: { active: game.demo, phase: game.demoPhase },
       parking: {
         inside: isCarFullyInTarget(),
         aligned: isVerticallyAligned(),
@@ -1677,6 +1721,8 @@
     advance: debugAdvance,
     autopark: debugAutopark,
     parse: parseLocalCommand,
+    navigate,
+    demoStep: updateDemo,
   };
 
   init();

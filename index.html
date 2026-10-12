@@ -30,6 +30,13 @@
       </div>
     </header>
 
+    <section id="homeScreen" class="home-screen">
+      <div class="home-hero"><span class="section-kicker">WELCOME TO AI DRIVING SCHOOL</span><h2>你负责指挥。<br>她负责……制造意外。</h2><p>坐上副驾驶，教小满倒车入库。先看一场爆笑示范，或者直接上场试试。</p><button class="primary-button" data-route="demo">▶ 先看爆笑 Demo</button></div>
+      <div class="level-card"><span class="level-number">01</span><div><span class="section-kicker">科目二 · 开放练习</span><h3>右侧倒车入库</h3><p>把车完整倒进绿色车位，再喊一声“停车”。<br>方向盘归她，耐心归你。</p></div><div class="level-actions"><button class="secondary-button" data-route="demo">观看 Demo</button><button class="primary-button" data-route="practice">自己尝试 →</button></div></div>
+      <p class="home-note">更多关卡还在修路中 · 本关支持中文语音与文字指令</p>
+    </section>
+    <div id="levelScreen" hidden>
+    <nav class="level-nav"><button class="secondary-button" data-route="home">← 返回首页</button><strong id="modeLabel">第一关 · 自己尝试</strong><label>Demo 语速 <select id="voiceRate"><option value="0.65">慢悠悠</option><option value="0.8" selected>慢一点</option><option value="1">正常</option></select></label></nav>
     <section class="score-strip" aria-label="游戏状态">
       <div class="score-item score-primary">
         <span class="score-label">当前得分</span>
@@ -150,7 +157,7 @@
               <span class="toggle-ui"></span>
               <span>
                 <strong>大模型增强理解</strong>
-                <small>需运行 server.mjs 并配置 API；失败会自动回退本地解析</small>
+                <small>开启后更懂自然表达；不可用时自动使用基础理解</small>
               </span>
             </label>
           </div>
@@ -167,8 +174,10 @@
         </div>
       </aside>
     </section>
+    </div>
   </main>
 
+  <div id="demoEndModal" class="modal" aria-hidden="true"><div class="modal-backdrop"></div><section class="modal-card result-card" role="dialog" aria-modal="true" aria-labelledby="demoEndTitle"><div class="result-emoji">💥 → 🚗 → 🎉</div><span class="section-kicker">DEMO COMPLETE</span><h2 id="demoEndTitle">撞了三次，终于进去了。</h2><p>小满：这是倒车入库，不是倒车入土。<br>现在轮到你当教练了！</p><div class="result-actions"><button class="secondary-button" data-route="demo">再看一遍 Demo</button><button class="primary-button" data-route="practice">自己尝试</button></div><button class="secondary-button modal-primary" data-route="home">返回首页</button></section></div>
   <div id="helpModal" class="modal" aria-hidden="true">
     <div class="modal-backdrop" data-close-modal="help"></div>
     <section class="modal-card help-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
@@ -202,6 +211,7 @@
       </div>
       <p id="resultComment" class="result-comment">小满：我就说我有天赋吧。</p>
       <div class="result-actions">
+        <button class="secondary-button" data-route="home">返回首页</button>
         <button id="copyResultButton" class="secondary-button" type="button">复制战绩文案</button>
         <button id="playAgainButton" class="primary-button" type="button">再来一把</button>
       </div>
