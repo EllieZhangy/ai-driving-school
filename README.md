@@ -83,3 +83,10 @@ Short commands include “倒”, “停”, “前进”, “左”, “右”,
 ## Validation
 
 Run `npm test`, `node --check game.js`, `node --check voice-recognition.js`, `node --check voice-audio-worklet.js`, and `node --check server.mjs`. See `TESTING.md` for checked behavior and device limitations. `window.__AI_DRIVE_DEBUG__` exposes local simulation helpers for development.
+
+## Selected work
+
+- [Ming Oracle](https://ming-oracle-eta.vercel.app/) — a bilingual AI experience combining computed BaZi structure with symbolic personal reflection.
+- [Daily Mood Screen](https://github.com/EllieZhangy/Daily-Mood-Screen) — a personalized macOS wallpaper pipeline using weather, photos, and mood.
+- [Memory Studio](https://github.com/EllieZhangy/memory-studio) — a photo-to-poster web app with reusable visual styles.
+- [Radiology Impression Prediction](https://github.com/EllieZhangy/LLM-Based-Impression-Prediction-from-Radiology-Reports) — an LLM research project for radiology report impression generation.
